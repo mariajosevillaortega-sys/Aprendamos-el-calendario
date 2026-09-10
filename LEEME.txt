@@ -1,0 +1,15 @@
+MISIÓN: DOMINA EL CALENDARIO
+
+Autora: Fonoaudióloga María José Villa Ortega
+
+Contenido de la carpeta:
+- index.html: archivo principal del videojuego.
+- assets/: imágenes y recursos visuales requeridos por index.html.
+
+IMPORTANTE PARA PUBLICAR:
+1. Subir index.html y la carpeta assets manteniendo exactamente esta estructura.
+2. No renombrar la carpeta assets ni mover sus archivos sin actualizar index.html.
+3. El progreso del juego se guarda localmente en el navegador/dispositivo.
+4. Para iniciar el videojuego, abrir index.html.
+
+Esta versión fue preparada a partir de la versión v13 original con cuaderno, separando las imágenes del HTML para reducir considerablemente el peso de index.html.

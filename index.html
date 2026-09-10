@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#4a7d39" />
+<title>Misión: Domina el Calendario · Fonoaudióloga María José Villa Ortega</title>
+<style>
+:root{
+  --brown:#3b2417;
+  --brown2:#5a351f;
+  --cream:#fff0cf;
+  --cream2:#f8dfae;
+  --wood:#9a5529;
+  --green:#40a62f;
+  --gold:#f0b22d;
+  --danger:#c84d37;
+  --shadow:0 .55rem 1.2rem rgba(45,27,15,.30);
+  --font:"Arial Rounded MT Bold","Trebuchet MS","Nunito",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#b9e8ff;color:var(--brown);font-family:var(--font);font-weight:900}
+button,input{font:inherit}
+button{touch-action:manipulation}
+#app{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;background:linear-gradient(#9fdcff 0%,#d7f4ff 48%,#a9d68e 100%)}
+.screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;overflow:auto;padding:0;overscroll-behavior:none}
+.screen.active{display:flex}
+.stage{position:relative;flex:none;max-width:100vw;max-height:100vh;width:min(100vw,calc(100vh * var(--ratio)));aspect-ratio:var(--ratio);overflow:hidden;background:transparent;isolation:isolate}
+.stage>.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0;user-select:none;pointer-events:none}
+
+/* Pantalla completa real: ocupa todo el espacio disponible sin recortar contenido */
+:fullscreen #app, :-webkit-full-screen #app{width:100vw;height:100vh;height:100dvh;inset:0}
+:fullscreen .screen, :-webkit-full-screen .screen{width:100vw;height:100vh;height:100dvh;inset:0}
+:fullscreen .stage, :-webkit-full-screen .stage{width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important}
+:fullscreen .stage>.bg, :-webkit-full-screen .stage>.bg{width:100%!important;height:100%!important;object-fit:fill!important}
+.stage.sky{background:linear-gradient(#85d5ff 0%,#c6efff 55%,#91c87f 100%)}
+.brown-text{color:var(--brown);font-weight:900;text-shadow:0 .04em rgba(255,255,255,.25)}
+.hidden{display:none!important}
+
+/* Common buttons */
+.ui-circle,.ui-button,.audio-mini{border:none;cursor:pointer;color:var(--brown);font-weight:900;display:inline-grid;place-items:center;transition:transform .12s ease,filter .12s ease;box-shadow:0 .18rem .38rem rgba(45,26,12,.28)}
+.ui-circle:active,.ui-button:active,.audio-mini:active{transform:scale(.95)}
+.ui-circle:focus-visible,.ui-button:focus-visible,.answer-btn:focus-visible,.world-card:focus-visible,.drag-card:focus-visible,.pair-card:focus-visible{outline:.25rem solid #fff;outline-offset:.16rem}
+.ui-circle{width:clamp(38px,5.2vmin,68px);aspect-ratio:1;border-radius:50%;background:linear-gradient(#b8743d,#8d4822);border:.16rem solid #663316;color:#fff;font-size:clamp(18px,2.7vmin,34px)}
+.ui-button{min-height:2.9rem;border-radius:1.3rem;padding:.55rem 1.1rem;background:linear-gradient(#fff3d6,#f4d796);border:.18rem solid #9a562c;font-size:clamp(15px,2vmin,26px)}
+.ui-button.primary{background:linear-gradient(#74db45,#2e9e29);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.18)}
+.ui-button.danger{background:linear-gradient(#f07d68,#c84131);color:white}
+.audio-mini{width:1.9em;height:1.9em;border-radius:50%;background:#8a532e;color:white;border:.1rem solid #63371d;font-size:.72em;vertical-align:middle;margin-inline-start:.25em;box-shadow:none}
+.audio-mini[disabled]{opacity:.35;cursor:default}
+
+/* Start */
+#startStage{--ratio:3/2}
+.start-hotspot{position:absolute;z-index:5;background:transparent;border:0;cursor:pointer;border-radius:1rem}
+#startBtn{left:42.2%;top:60.6%;width:34.5%;height:13.4%}
+#startAudio{left:76.3%;top:4%;width:7.5%;height:10%}
+#startFullscreen{left:84.4%;top:4%;width:7.5%;height:10%}
+#startSettings{left:92%;top:4%;width:7%;height:10%}
+.start-hotspot:focus-visible{outline:.3rem solid white;outline-offset:-.3rem}
+.start-credit{position:absolute;z-index:6;left:64%;bottom:2.15%;transform:translateX(-50%);width:max-content;max-width:48%;display:block;text-align:center;padding:0;background:transparent;border:0;box-shadow:none;color:#f5dfb0;font-size:clamp(11px,1.34vw,21px);line-height:1;font-weight:900;white-space:nowrap;text-shadow:0 .10em .16em rgba(59,36,23,.92),0 .02em 0 rgba(255,255,255,.18);pointer-events:none}
+
+/* Worlds — official baked screen + invisible functional hotspots */
+#worldsStage{--ratio:1672/941}
+.world-grid{position:absolute;z-index:5;left:0;top:0;width:100%;height:100%;display:block}
+.world-card{position:absolute;border:0;background:transparent;box-shadow:none;color:transparent;padding:0;cursor:pointer;overflow:visible;border-radius:1rem}
+.world-card.locked{cursor:not-allowed}
+.world-card:focus-visible{outline:.25rem solid #fff;outline-offset:-.18rem;background:rgba(255,255,255,.06)}
+.world-copy,.world-num,.world-name,.world-status{display:none!important}
+/* Hotspots de mundos: centros medidos directamente sobre la imagen oficial */
+.world-grid .world-card:nth-child(1){left:24.94%;top:20.19%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(2){left:37.62%;top:20.19%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(3){left:50.54%;top:20.19%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(4){left:63.34%;top:20.19%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(5){left:76.26%;top:20.19%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(6){left:25.06%;top:46.55%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(7){left:37.74%;top:46.55%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(8){left:50.42%;top:46.55%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(9){left:63.34%;top:46.55%;width:11.36%;height:24.44%}
+.world-grid .world-card:nth-child(10){left:76.38%;top:46.55%;width:11.36%;height:24.44%}
+/* Tick/candado centrado sobre el círculo de madera de cada panel */
+.world-state-icon{position:absolute;z-index:7;left:50%;top:90.43%;transform:translate(-50%,-50%);width:25.5%;aspect-ratio:1;display:grid;place-items:center;background:transparent;border:0;box-shadow:none;font-size:clamp(18px,1.85vw,31px);line-height:1;color:#fff7dc;text-shadow:0 2px 2px rgba(63,30,12,.75);pointer-events:none}
+.world-state-icon.available{color:transparent;text-shadow:none}
+.world-state-icon.completed{color:#fff7dc;font-size:clamp(21px,2.15vw,35px)}
+.world-state-icon.locked{font-size:0}
+.world-state-icon.locked::before{content:"";position:absolute;left:31%;top:45%;width:38%;height:31%;border-radius:12%;background:#f8e7bd;box-shadow:0 1px 1px rgba(60,31,12,.65)}
+.world-state-icon.locked::after{content:"";position:absolute;left:37%;top:24%;width:26%;height:30%;border:.14rem solid #f8e7bd;border-bottom:0;border-radius:50% 50% 0 0;box-sizing:border-box}
+/* Colección compacta: cada asset ocupa exactamente la caja de su sombra oficial */
+.compact-collection{position:absolute;z-index:6;left:0;top:0;width:100%;height:100%;display:block;background:transparent;border:0;box-shadow:none;padding:0;pointer-events:none}
+.collection-mini-slot{position:absolute;display:grid;place-items:center;overflow:visible;background:transparent;border:0}
+/* Ajuste fino de cada asset para que quede equilibrado sobre su sombra oficial */
+.collection-mini-slot:nth-child(1){left:17.78%;top:84.25%;width:5.12%;height:7.95%}
+.collection-mini-slot:nth-child(2){left:24.02%;top:84.28%;width:4.30%;height:7.55%}
+.collection-mini-slot:nth-child(3){left:30.14%;top:84.18%;width:4.52%;height:7.55%}
+.collection-mini-slot:nth-child(4){left:36.20%;top:83.78%;width:4.68%;height:8.18%}
+.collection-mini-slot:nth-child(5){left:42.46%;top:83.94%;width:4.34%;height:7.12%}
+.collection-mini-slot:nth-child(6){left:48.60%;top:84.02%;width:4.86%;height:6.84%}
+.collection-mini-slot:nth-child(7){left:54.98%;top:83.58%;width:3.78%;height:7.76%}
+.collection-mini-slot:nth-child(8){left:61.02%;top:83.34%;width:4.86%;height:8.98%}
+.collection-mini-slot:nth-child(9){left:67.22%;top:83.96%;width:4.68%;height:7.98%}
+.collection-mini-slot:nth-child(10){left:73.58%;top:83.52%;width:4.30%;height:9.24%}
+.collection-mini-slot img{display:none;width:100%;height:100%;object-fit:contain;transform:scale(1.08);transform-origin:center center}
+.collection-mini-slot.unlocked img{display:block;filter:drop-shadow(0 .11rem .09rem rgba(55,30,12,.24))}
+/* Ajuste individual de escala/orientación para calzar cada asset con su sombra */
+.collection-mini-slot:nth-child(2) img{transform:scale(1.27);transform-origin:center center}
+.collection-mini-slot:nth-child(4) img{transform:scale(1.26);transform-origin:center center}
+.collection-mini-slot:nth-child(5) img{transform:scale(1.25);transform-origin:center center}
+.collection-mini-slot:nth-child(6) img{transform:scaleX(-1) scale(1.14);transform-origin:center center}
+.collection-mini-slot:nth-child(7) img{transform:scale(1.38);transform-origin:center center}
+
+#openCollectionBtn{position:absolute;z-index:8;left:81.35%;top:83.0%;width:14.7%;height:8.5%;border:0;border-radius:1.4rem;background:transparent;cursor:pointer;color:transparent}
+#openCollectionBtn:focus-visible{outline:.25rem solid #fff;outline-offset:.12rem}
+/* El botón Inicio forma parte de la imagen oficial: la zona clickeable es invisible */
+#worldHome{position:absolute;z-index:9;left:1.45%;top:1.45%;width:5.55%;aspect-ratio:1;border:0;border-radius:28%;background:transparent;color:transparent;box-shadow:none;font-size:0;cursor:pointer;opacity:.001}
+#worldHome:focus-visible{opacity:.13;outline:.25rem solid white;outline-offset:-.08rem;background:white}
+/* Audio / pantalla completa / configuración: hotspots invisibles sobre los iconos del fondo */
+.world-controls{position:absolute;z-index:9;left:77.15%;top:1.75%;width:18.55%;height:10.15%;display:block;pointer-events:none}
+.world-controls .ui-circle{position:absolute;top:0;height:100%;width:29.3%;margin:0;padding:0;background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important;text-shadow:none!important;opacity:.001!important;font-size:0!important;pointer-events:auto;cursor:pointer;border-radius:24%}
+#worldAudio{left:0}#worldFullscreen{left:35.4%}#worldSettings{left:70.8%}
+.world-controls .ui-circle:focus-visible{opacity:.12!important;outline:.24rem solid #fff;outline-offset:-.05rem;background:#fff!important}
+/* Reiniciar desde el mapa: botón de madera, separado del fondo oficial */
+#worldReset{position:absolute;z-index:10;left:1.65%;bottom:2.2%;width:5.55%;aspect-ratio:1;border-radius:50%;background:linear-gradient(#b8743d,#8d4822);border:.16rem solid #663316;color:#fff;font-size:clamp(22px,3.1vw,44px);line-height:1;display:grid;place-items:center;box-shadow:0 .22rem .45rem rgba(45,26,12,.36);cursor:pointer;text-shadow:0 2px 2px rgba(70,30,10,.55)}
+#worldReset:hover{filter:brightness(1.05)}
+#worldReset:active{transform:scale(.95)}
+#worldReset:focus-visible{outline:.25rem solid #fff;outline-offset:.12rem}
+
+/* Challenge */
+.challenge-stage{background:linear-gradient(#8bd9ff,#d8f3ff 58%,#81c17a)}
+.challenge-stage .challenge-bg{z-index:0}
+.hud{position:absolute;z-index:20;left:14.5%;top:2.4%;width:58.8%;height:10.8%;display:grid;grid-template-columns:40% 1fr;align-items:center;gap:2%;pointer-events:none}
+.hud-title{font-size:clamp(12px,1.55vw,24px);line-height:1.05;text-align:center;white-space:normal}
+.progress-wrap{display:flex;align-items:center;gap:.5rem;padding:0 .3rem}
+.progress-label{font-size:clamp(10px,1.15vw,18px);white-space:nowrap}
+.progress-segments{display:grid;grid-template-columns:repeat(10,1fr);gap:.18rem;flex:1}
+.progress-segments span{height:clamp(8px,1.25vw,17px);border-radius:.35rem;background:#e9cfa1;border:1px solid #8e5b35;box-shadow:inset 0 2px 3px rgba(0,0,0,.1)}
+.progress-segments span.done{background:#55bd3b}.progress-segments span.current{background:#f2bd33}
+.challenge-controls{position:absolute;z-index:22;right:2.1%;top:2.6%;display:flex;gap:.45rem}
+.challenge-back{position:absolute;z-index:22;left:1.3%;top:2.5%}
+.challenge-hint{position:absolute;z-index:22;right:2.5%;top:18.5%}
+.instruction-area{position:absolute;z-index:10;display:flex;align-items:center;justify-content:center;text-align:center;padding:.4rem 2rem;line-height:1.18;font-size:clamp(15px,2vw,30px);color:var(--brown)}
+.prompt-area{position:absolute;z-index:10;display:flex;align-items:center;justify-content:center;text-align:center;padding:.6rem 1rem;line-height:1.2;font-size:clamp(16px,2.35vw,34px);color:var(--brown);overflow:hidden}
+.answer-area{position:absolute;z-index:12;display:flex;align-items:center;justify-content:center;gap:1.2%;padding:.3rem}
+.answer-btn{position:relative;border:.15rem solid #85502d;background:rgba(255,245,220,.93);color:var(--brown);font-weight:900;border-radius:1rem;min-width:19%;height:76%;padding:.3rem .45rem;box-shadow:0 .18rem .35rem rgba(54,30,14,.22);cursor:pointer;font-size:clamp(13px,1.7vw,27px);line-height:1.05;display:flex;align-items:center;justify-content:center;text-align:center}
+.answer-btn.selected{box-shadow:0 0 0 .22rem #f0bb32,0 .2rem .35rem rgba(54,30,14,.22)}
+.answer-btn.correct-flash{background:#d9f3c8}.answer-btn.wrong-flash{background:#ffd6ce}
+.multi-check{position:absolute;z-index:14;right:4%;bottom:1.4%;display:none}.multi-check.show{display:inline-grid}
+
+/* Template geometry */
+.template-selection{--ratio:1672/941}
+.template-selection .instruction-area{left:27.2%;top:15.2%;width:45.7%;height:13.5%}
+.template-selection .prompt-area{left:26.1%;top:31.0%;width:47.4%;height:29.2%}
+.template-selection .answer-area{left:8.3%;top:65.5%;width:83%;height:15.5%}
+.template-drag{--ratio:3/2}
+.template-drag .instruction-area{left:13.8%;top:14.5%;width:72.4%;height:15.5%}
+.template-drag .prompt-area{left:13.2%;top:31.8%;width:74.5%;height:35.4%}
+.template-drag .prompt-area::before{content:"";position:absolute;inset:7% 5%;background:rgba(255,239,205,.94);border-radius:1.2rem;box-shadow:inset 0 0 0 .08rem rgba(130,79,40,.18);z-index:0}
+.template-drag .prompt-area>.drag-layout{position:relative;z-index:1}
+.template-drag .answer-area{left:14.1%;top:70.0%;width:72.6%;height:20.3%}
+.template-relation{--ratio:1672/941}
+.template-relation .instruction-area{left:13.7%;top:15.4%;width:70.3%;height:13.8%}
+.template-relation .prompt-area{left:12.8%;top:30.1%;width:74%;height:57.2%;padding:2% 5%}
+.template-relation .answer-area{display:none}
+.template-detect{--ratio:3/2}
+.template-detect .instruction-area{left:13.8%;top:14.4%;width:72.1%;height:15.8%}
+.template-detect .prompt-area{left:12.2%;top:31.0%;width:76.4%;height:36.1%}
+.template-detect .answer-area{left:13.4%;top:70.4%;width:73%;height:20.2%}
+.template-calendar{--ratio:1672/941}
+.template-calendar .instruction-area{left:20.5%;top:12.6%;width:57.2%;height:10.8%}
+.template-calendar .prompt-area{left:20.3%;top:23.3%;width:59.4%;height:68.2%;padding:0;overflow:visible}
+.template-calendar .answer-area{display:none}
+.template-clues{--ratio:3/2}
+.template-clues .instruction-area{left:13.9%;top:14.6%;width:72%;height:15.4%}
+.template-clues .prompt-area{left:11.1%;top:31.7%;width:77.8%;height:36.4%;padding:.5rem}
+.template-clues .answer-area{left:13.2%;top:70.9%;width:74%;height:19.2%}
+
+/* Drag */
+.drag-layout{width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:2%;flex-wrap:wrap}
+.drop-slot{min-width:18%;min-height:40%;border:.18rem dashed #b68558;border-radius:1rem;background:rgba(255,251,238,.38);display:flex;align-items:center;justify-content:center;text-align:center;padding:.4rem;font-size:clamp(12px,1.5vw,23px);position:relative}
+.drop-slot .slot-label{position:absolute;top:.25rem;left:0;right:0;font-size:.68em;opacity:.76}
+.drop-slot.filled{border-style:solid;background:rgba(240,250,222,.8)}
+.drag-card{position:relative;min-width:16%;height:72%;border:.14rem solid #8a522d;border-radius:1rem;background:rgba(255,246,224,.96);display:flex;align-items:center;justify-content:center;text-align:center;padding:.3rem .45rem;cursor:grab;user-select:none;touch-action:none;font-size:clamp(12px,1.55vw,24px);box-shadow:0 .18rem .35rem rgba(54,30,14,.2)}
+.drag-card.selected{outline:.23rem solid #f0b82d}.drag-card.used{opacity:.25;pointer-events:none}
+.drag-ghost{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%);padding:.7rem 1rem;border-radius:1rem;background:#fff1cb;border:.18rem solid #87512d;color:var(--brown);font-weight:900;box-shadow:var(--shadow)}
+
+/* Relation */
+.relation-board{position:relative;width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;gap:8%;padding:1% 7%}
+.pair-column{display:grid;grid-template-rows:repeat(4,1fr);gap:2.4%;align-content:center}
+.pair-card{border:0;background:transparent;border-radius:1rem;color:var(--brown);font-weight:900;display:flex;align-items:center;justify-content:center;text-align:center;padding:.25rem;cursor:pointer;font-size:clamp(12px,1.45vw,23px);position:relative;box-shadow:none}
+.pair-card.active{outline:.24rem solid #f0b52b;background:rgba(255,236,161,.26)}.pair-card.matched{background:rgba(210,241,184,.62);pointer-events:none}
+.relation-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.relation-svg line{stroke:#4e7c34;stroke-width:5;stroke-linecap:round}
+
+/* Detect */
+.detect-sequence{width:90%;display:flex;align-items:center;justify-content:center;gap:1.4%;flex-wrap:wrap}
+.detect-token{border:.14rem solid #8b512e;background:#fff2d2;border-radius:.85rem;padding:.65rem .8rem;min-width:15%;text-align:center;font-size:clamp(13px,2vw,29px)}
+.detect-token.emphasis{background:#fff8e7}
+
+/* Calendar */
+.calendar-widget{position:relative;width:min(98%,72vh);aspect-ratio:1312/1199;container-type:inline-size}
+.calendar-widget>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.calendar-month{position:absolute;left:18%;top:6.5%;width:64%;height:12%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(14px,3.5cqw,35px);font-weight:900;color:var(--brown);text-transform:uppercase}
+.calendar-weekdays{position:absolute;left:8.3%;top:23.4%;width:83.5%;height:7.2%;display:grid;grid-template-columns:repeat(7,1fr);gap:1.2%}
+.calendar-weekdays div{display:flex;align-items:center;justify-content:center;text-align:center;color:var(--brown);font-size:clamp(7px,1.9cqw,18px);line-height:1;font-weight:900;padding-top:.15rem}
+.calendar-days{position:absolute;left:8.25%;top:32.35%;width:83.55%;height:51.9%;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);gap:2.05% 1.3%}
+.cal-cell{border:0;background:transparent;color:var(--brown);font-weight:900;font-size:clamp(10px,3.3cqw,28px);border-radius:.7rem;cursor:pointer;position:relative;display:grid;place-items:center}
+.cal-cell:disabled{cursor:default;color:transparent}
+.cal-cell:not(:disabled):hover{background:rgba(255,223,122,.28)}
+.cal-cell.targeted{box-shadow:inset 0 0 0 .18rem #f0b431;background:rgba(255,231,145,.38)}
+.calendar-read{position:absolute;right:4%;bottom:3%;z-index:4}
+
+/* Clues */
+.clue-layout{width:100%;height:100%;display:grid;grid-template-columns:63% 34%;gap:3%;padding:1%}
+.clue-list,.clue-focus{border-radius:1rem;color:var(--brown);padding:4%;display:flex;flex-direction:column;justify-content:center;gap:.55rem;font-size:clamp(12px,1.55vw,23px)}
+.clue-list{background:rgba(255,246,225,.22)}
+.clue-line{display:flex;align-items:flex-start;gap:.4rem}.clue-line::before{content:"🔎";font-size:.85em}
+.clue-focus{background:rgba(255,246,225,.18);align-items:center;text-align:center;font-size:clamp(14px,1.8vw,28px)}
+
+/* Feedback / hint bubble */
+.feedback{position:absolute;z-index:70;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);min-width:30%;max-width:72%;padding:1rem 1.25rem;border-radius:1.3rem;border:.23rem solid #87502b;background:#fff0cf;color:var(--brown);box-shadow:0 .8rem 2rem rgba(42,24,10,.35);font-size:clamp(16px,2.2vw,32px);text-align:center;opacity:0;pointer-events:none;transition:.15s}
+.feedback.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+.feedback.good{background:#e4f6cc;border-color:#5a9139}.feedback.bad{background:#ffe0d7;border-color:#c65e46}
+.hint-pop{position:absolute;z-index:65;right:8%;top:20%;max-width:30%;padding:.8rem 1rem;border-radius:1rem;background:#fff0cf;border:.2rem solid #87502b;box-shadow:var(--shadow);font-size:clamp(12px,1.55vw,22px);display:none}
+.hint-pop.show{display:block}
+
+/* Collection */
+#collectionStage{--ratio:4/3}
+.collection-back{position:absolute;z-index:5;left:1.6%;top:2.5%}
+.collection-slots{position:absolute;z-index:4;inset:0;display:block;pointer-events:none}
+/* Posición real de cada asset sobre su silueta oficial. No se usa grilla genérica. */
+.collection-slot-big{position:absolute;display:grid;place-items:center;overflow:visible;aspect-ratio:1/1}
+.collection-slot-big:nth-child(1){left:27.721%;top:38.594%;width:10.211%}
+.collection-slot-big:nth-child(2){left:39.775%;top:37.522%;width:11.852%}
+.collection-slot-big:nth-child(3){left:53.917%;top:38.392%;width:11.049%}
+.collection-slot-big:nth-child(4){left:67.661%;top:38.031%;width:11.749%}
+.collection-slot-big:nth-child(5){left:81.367%;top:37.803%;width:11.611%}
+.collection-slot-big:nth-child(6){left:27.557%;top:59.250%;width:10.849%}
+.collection-slot-big:nth-child(7){left:39.976%;top:58.340%;width:12.382%}
+.collection-slot-big:nth-child(8){left:53.947%;top:59.154%;width:11.978%}
+.collection-slot-big:nth-child(9){left:67.556%;top:59.287%;width:11.711%}
+.collection-slot-big:nth-child(10){left:80.647%;top:58.523%;width:12.779%}
+.collection-slot-big img{width:100%;height:100%;object-fit:contain;opacity:0;transition:.35s ease;transform-origin:center center}
+.collection-slot-big.unlocked img{opacity:1;filter:drop-shadow(0 .20rem .20rem rgba(64,36,18,.22))}
+/* El paraguas se invierte para seguir exactamente la dirección de la silueta. */
+.collection-slot-big:nth-child(6) img{transform:scaleX(-1)}
+.collection-controls{position:absolute;z-index:6;right:1.5%;top:1.8%;display:flex;gap:.45rem}
+
+/* Complete world */
+#completeStage{--ratio:16/9;background:linear-gradient(#8dd8ff,#d9f5ff 55%,#86bd6f)}
+.complete-panel{position:absolute;left:50%;top:50%;height:92%;aspect-ratio:1122/1402;transform:translate(-50%,-50%);z-index:2}
+.complete-panel>img{width:100%;height:100%;object-fit:contain}
+.complete-title{position:absolute;left:15%;top:5.5%;width:70%;height:10%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(18px,3.2vh,38px)}
+.complete-text{position:absolute;left:16%;top:20%;width:68%;height:19%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(14px,2.1vh,26px);line-height:1.15}
+.complete-item{position:absolute;left:24%;top:44%;width:52%;height:23%;display:grid;place-items:center}
+.complete-item img{max-width:78%;max-height:95%;object-fit:contain;filter:drop-shadow(0 .3rem .3rem rgba(78,44,18,.25))}
+.complete-next{position:absolute;left:16%;top:69%;width:68%;height:9%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(12px,1.8vh,22px)}
+.complete-continue{position:absolute;left:24%;top:82%;width:52%;height:9%;border:0;background:transparent;cursor:pointer}
+.complete-audio{position:absolute;right:9%;top:17%;z-index:5}
+
+/* Finale */
+#finalStage{--ratio:4/3}
+.final-controls{position:absolute;z-index:20;left:31%;bottom:2%;width:60%;display:flex;gap:.55rem;justify-content:center;align-items:center;background:rgba(255,238,201,.96);border:.18rem solid #87502b;border-radius:1.2rem;padding:.4rem;box-shadow:var(--shadow)}
+.final-controls .ui-button{font-size:clamp(11px,1.35vw,19px);min-height:2.4rem;padding:.42rem .7rem}
+#confettiCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:15;pointer-events:none}
+
+/* Modals */
+.modal-backdrop{position:fixed;z-index:10000;inset:0;background:rgba(28,17,10,.56);display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-backdrop.show{display:flex}
+.modal{width:min(92vw,560px);background:#fff0cf;border:.3rem solid #8b4c27;border-radius:1.6rem;box-shadow:0 1.2rem 3rem rgba(0,0,0,.35);padding:1.25rem;color:var(--brown);text-align:center}
+.modal h2{margin:.1rem 0 .6rem;font-size:clamp(22px,4vw,34px)}
+.modal p{font-size:clamp(15px,2.7vw,21px);line-height:1.25}.modal-row{display:flex;gap:.65rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:.8rem 0;padding:.65rem;border-radius:.8rem;background:#f8dcaa}
+.setting-row select{padding:.45rem;border:.14rem solid #8b4c27;border-radius:.6rem;background:white;color:var(--brown);font-weight:900}
+
+
+/* ===== Pantallas dinámicas definitivas ===== */
+.challenge-stage .challenge-bg{z-index:0}
+.hud{position:absolute;z-index:20;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.hud-title{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.03;font-size:clamp(12px,1.55vw,25px);white-space:normal;padding:0 .45rem;overflow:hidden}
+.progress-wrap{position:absolute;display:flex;align-items:center;justify-content:center;padding:0;margin:0}
+.progress-label{font-size:clamp(14px,1.7vw,28px);line-height:1;font-weight:900;color:var(--brown);text-shadow:0 1px 0 rgba(255,239,205,.55);white-space:nowrap}
+.progress-segments{display:none!important}
+
+/* Los controles ya están dibujados en las imágenes oficiales. Estos botones son hotspots invisibles. */
+.challenge-controls{position:absolute;z-index:25;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.challenge-controls .ui-circle,.challenge-back,.challenge-hint{position:absolute;margin:0;padding:0;background:transparent!important;border:0!important;box-shadow:none!important;color:transparent!important;text-shadow:none!important;font-size:0!important;opacity:.001!important;cursor:pointer;border-radius:50%;pointer-events:auto}
+.challenge-controls .ui-circle:focus-visible,.challenge-back:focus-visible,.challenge-hint:focus-visible{opacity:.12!important;outline:.24rem solid #fff;outline-offset:-.08rem;background:#fff!important}
+.challenge-back{left:1.2%;top:1.6%;width:6.6%;height:10.6%}
+#challengeAudio{left:80.9%;top:2.0%;width:6.2%;height:10.0%}
+#challengeSettings{left:87.3%;top:2.0%;width:6.2%;height:10.0%}
+#challengeFullscreen{left:93.7%;top:2.0%;width:5.8%;height:10.0%}
+.challenge-hint{left:91.3%;top:14.1%;width:7.8%;height:13.0%}
+.template-clues .challenge-hint{left:64.0%;top:43.2%;width:8.5%;height:13.5%}
+
+.instruction-area{position:absolute;z-index:10;display:flex;align-items:center;justify-content:center;text-align:center;padding:.35rem 1.6rem;line-height:1.16;font-size:clamp(14px,1.9vw,30px);color:var(--brown);overflow:hidden}
+.instruction-area>span{max-width:92%}
+.prompt-area{position:absolute;z-index:10;display:flex;align-items:center;justify-content:center;text-align:center;padding:.45rem .8rem;line-height:1.18;font-size:clamp(15px,2.15vw,34px);color:var(--brown);overflow:hidden}
+.answer-area{position:absolute;z-index:12;display:flex;align-items:center;justify-content:center;gap:1.2%;padding:.3rem 1%;overflow:hidden}
+.answer-btn{position:relative;border:.15rem solid #87512e;background:linear-gradient(#fff5dc,#f7dfae);color:var(--brown);font-weight:900;border-radius:1rem;height:72%;padding:.35rem .6rem;box-shadow:0 .16rem .28rem rgba(54,30,14,.22);cursor:pointer;font-size:clamp(12px,1.55vw,25px);line-height:1.08;display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;max-width:36%}
+.answer-area[data-count="2"] .answer-btn{flex:0 1 34%}
+.answer-area[data-count="3"] .answer-btn{flex:0 1 29%}
+.answer-area[data-count="4"] .answer-btn{flex:0 1 22.5%}
+.answer-btn.selected{box-shadow:0 0 0 .22rem #f0bb32,0 .2rem .35rem rgba(54,30,14,.22)}
+.answer-btn.correct-flash{background:#d9f3c8}.answer-btn.wrong-flash{background:#ffd6ce}
+
+/* Título y contador: panel crema + espacio de madera. */
+.template-selection .hud-title{left:24.0%;top:3.7%;width:43.8%;height:7.1%}
+.template-selection .progress-wrap{left:68.7%;top:3.6%;width:7.4%;height:7.3%}
+.template-relation .hud-title{left:22.3%;top:3.3%;width:41.6%;height:7.4%}
+.template-relation .progress-wrap{left:64.8%;top:3.2%;width:8.4%;height:7.6%}
+.template-calendar .hud-title{left:22.6%;top:3.1%;width:44.4%;height:7.2%}
+.template-calendar .progress-wrap{left:68.6%;top:3.1%;width:7.2%;height:7.2%}
+.template-drag .hud-title,.template-detect .hud-title,.template-clues .hud-title{left:20.7%;top:2.9%;width:41.4%;height:7.5%}
+.template-drag .progress-wrap,.template-detect .progress-wrap,.template-clues .progress-wrap{left:63.2%;top:2.9%;width:11.5%;height:7.5%}
+
+/* Selección */
+.template-selection{--ratio:1672/941}
+.template-selection .instruction-area{left:27.2%;top:15.4%;width:45.7%;height:13.2%}
+.template-selection .prompt-area{left:26.0%;top:31.2%;width:48.0%;height:29.5%}
+.template-selection .answer-area{left:9.2%;top:67.0%;width:81.6%;height:14.7%}
+.template-selection .multi-check{right:5.7%;bottom:7.2%;height:6.2%;min-height:0;padding:.2rem .7rem;font-size:clamp(11px,1.25vw,19px)}
+
+/* Arrastrar y completar — mesa de trabajo interna dinámica */
+.template-drag{--ratio:3/2}
+.template-drag .instruction-area{left:19.6%;top:14.4%;width:61.0%;height:13.2%}
+.template-drag .prompt-area{left:18.9%;top:31.0%;width:62.8%;height:38.3%;padding:0;overflow:visible}
+.template-drag .answer-area{left:6.2%;top:73.2%;width:87.5%;height:18.0%}
+.template-drag .prompt-area::before{display:none!important}
+.drag-layout{width:88%;height:66%;display:grid;gap:2.8%;align-items:stretch;justify-content:center;padding:3.6% 4.4%;position:relative;background:linear-gradient(180deg,rgba(255,247,224,.98),rgba(249,229,190,.98));border:.14rem solid rgba(128,76,40,.86);border-radius:1.25rem;box-shadow:0 .22rem .55rem rgba(65,38,20,.18),inset 0 0 0 .12rem rgba(255,255,255,.52)}
+.drag-layout.drag-order[data-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr));padding-left:18%;padding-right:18%}
+.drag-layout.drag-order[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr));padding-left:8%;padding-right:8%}
+.drag-layout.drag-order[data-count="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+.drag-layout.drag-complete{display:flex;align-items:center;justify-content:center;width:84%;height:58%;padding:4% 6%}
+.drop-slot{height:100%;min-width:0;min-height:0;border:.13rem solid #a86e43;background:rgba(255,250,234,.96);border-radius:1rem;display:flex;align-items:center;justify-content:center;text-align:center;padding:.7rem .45rem;font-size:clamp(12px,1.46vw,23px);position:relative;color:var(--brown);box-shadow:0 .12rem .28rem rgba(60,34,18,.12),inset 0 0 0 .08rem rgba(255,255,255,.62)}
+.drop-slot:hover,.drop-slot:focus-within{outline:.20rem solid rgba(240,178,45,.78);outline-offset:.08rem}
+.drop-slot .slot-label{position:absolute;left:8%;right:8%;top:8%;font-size:.67em;line-height:1.04;opacity:.80;font-weight:800}
+.drop-slot .slot-value{font-size:1.06em;line-height:1.05;padding-top:14%;font-weight:900}
+.drop-slot.filled{background:linear-gradient(180deg,#f2f9dc,#dff0c8);border-color:#6f8c43}
+.drop-slot.filled .slot-value{padding:.42rem .55rem;border-radius:.65rem;background:rgba(255,255,255,.56)}
+.completion-slot{width:100%;height:100%;padding:1rem 1.1rem;border-style:solid}
+.completion-sequence{width:100%;display:flex;align-items:center;justify-content:center;gap:.42rem;flex-wrap:nowrap;white-space:nowrap;font-size:clamp(13px,1.45vw,22px);font-weight:900;line-height:1.05;text-align:center}
+.completion-blank{min-width:17%;min-height:2.45em;display:inline-flex;align-items:center;justify-content:center;border:.18rem dashed #a96d40;border-radius:.85rem;background:#fff8e7;padding:.28rem .55rem;flex:0 0 auto}
+.completion-slot.filled .completion-blank{border-style:solid;border-color:#6f8c43;background:#e7f3d0}
+.completion-blank .slot-value{padding:0;font-size:1em}
+.drag-card{position:relative;flex:0 1 27%;min-width:0;height:68%;border:.14rem solid #87512e;border-radius:1rem;background:linear-gradient(#fff5dc,#f7dfae);display:flex;align-items:center;justify-content:center;text-align:center;padding:.3rem .55rem;cursor:grab;user-select:none;touch-action:none;font-size:clamp(12px,1.5vw,23px);box-shadow:0 .16rem .28rem rgba(54,30,14,.2)}
+.template-drag .answer-area[data-count="2"] .drag-card{flex-basis:31%}
+.template-drag .answer-area[data-count="3"] .drag-card{flex-basis:27%}
+.template-drag .answer-area[data-count="4"] .drag-card{flex-basis:21.5%}
+
+/* Relacionar: tres asociaciones exactas */
+.template-relation{--ratio:1672/941}
+.template-relation .instruction-area{left:18.4%;top:14.6%;width:64.0%;height:12.2%}
+.template-relation .prompt-area{left:13.0%;top:28.7%;width:73.0%;height:57.0%;padding:0;overflow:visible}
+.template-relation .answer-area{display:none}
+.relation-board{position:relative;width:100%;height:100%;padding:0}
+.pair-column{position:absolute;top:8.0%;width:24.0%;height:84.0%;display:grid;grid-template-rows:repeat(3,1fr);gap:5.8%;align-content:stretch}
+.pair-left{left:13.7%}.pair-right{right:13.7%}
+.pair-card{border:0;background:transparent;border-radius:.8rem;color:var(--brown);font-weight:900;display:flex;align-items:center;justify-content:center;text-align:center;padding:.25rem .35rem;cursor:pointer;font-size:clamp(11px,1.38vw,22px);position:relative;box-shadow:none;overflow:hidden}
+.pair-card.active{outline:.22rem solid #f0b52b;background:rgba(255,236,161,.23)}
+.pair-card.matched{background:rgba(210,241,184,.38);pointer-events:none}
+.relation-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.relation-svg line{stroke:#4e7c34;stroke-width:5;stroke-linecap:round}
+
+/* Detectar / corregir */
+.template-detect{--ratio:3/2}
+.template-detect .instruction-area{left:14.5%;top:14.6%;width:71.0%;height:15.0%}
+.template-detect .prompt-area{left:18.2%;top:33.0%;width:63.6%;height:31.8%;padding:2% 5%}
+.template-detect .answer-area{left:13.0%;top:72.5%;width:74.0%;height:18.1%}
+.detect-sequence{width:96%;height:100%;display:flex;align-items:center;justify-content:center;gap:1.5%;flex-wrap:wrap}
+.detect-token{border:.13rem solid #8b512e;background:#fff2d2;border-radius:.85rem;padding:.55rem .7rem;min-width:14%;text-align:center;font-size:clamp(12px,1.65vw,25px)}
+
+/* Calendario interactivo: el fondo queda libre; se inserta un solo calendario oficial grande. */
+.template-calendar{--ratio:1672/941}
+.template-calendar .instruction-area{left:23.1%;top:13.8%;width:51.3%;height:11.9%}
+.template-calendar .prompt-area{left:5.0%;top:25.2%;width:90%;height:72.5%;padding:0;overflow:visible}
+.template-calendar .answer-area{display:none}
+.calendar-widget{position:relative;width:min(78%,78vh);aspect-ratio:1312/1199;container-type:inline-size;filter:drop-shadow(0 .35rem .45rem rgba(54,30,14,.22))}
+.calendar-widget>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.calendar-month{position:absolute;left:18%;top:6.5%;width:64%;height:12%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(14px,3.5cqw,35px);font-weight:900;color:var(--brown);text-transform:uppercase}
+.calendar-weekdays{position:absolute;left:8.3%;top:23.4%;width:83.5%;height:7.2%;display:grid;grid-template-columns:repeat(7,1fr);gap:1.2%}
+.calendar-weekdays div{display:flex;align-items:center;justify-content:center;text-align:center;color:var(--brown);font-size:clamp(7px,1.85cqw,18px);line-height:1;font-weight:900;padding-top:.15rem}
+.calendar-days{position:absolute;left:8.25%;top:32.35%;width:83.55%;height:55.9%;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);gap:1.15% 1.3%}
+.cal-cell{border:0;background:transparent;color:var(--brown);font-weight:900;font-size:clamp(10px,3.0cqw,27px);border-radius:.6rem;cursor:pointer;position:relative;display:grid;place-items:center}
+.cal-cell:disabled{cursor:default;color:transparent}.cal-cell:not(:disabled):hover{background:rgba(255,223,122,.28)}
+.calendar-read{position:absolute;right:3.4%;bottom:1.4%;z-index:4;width:7.5%;aspect-ratio:1;border-radius:50%;border:.12rem solid #63371d;background:#8a532e;color:#fff;display:grid;place-items:center;font-size:clamp(12px,2.2cqw,24px);cursor:pointer}
+
+/* Pistas / detective */
+.template-clues{--ratio:3/2}
+.template-clues .instruction-area{left:14.5%;top:14.6%;width:71.0%;height:15.0%}
+.template-clues .prompt-area{left:11.7%;top:32.5%;width:45.2%;height:36.0%;padding:2.2%;overflow:hidden}
+.template-clues .answer-area{left:13.0%;top:72.4%;width:74.0%;height:18.2%}
+.clue-list{width:100%;height:100%;border-radius:0;color:var(--brown);padding:3%;display:flex;flex-direction:column;justify-content:center;gap:.7rem;font-size:clamp(12px,1.48vw,22px);background:transparent}
+.clue-line{display:flex;align-items:center;justify-content:center;gap:.4rem;text-align:center;line-height:1.14}.clue-line::before{content:"🔎";font-size:.8em;flex:none}
+.clue-focus,.clue-layout{display:contents}
+
+/* Pista y retroalimentación funcionales */
+.hint-pop{position:absolute;z-index:65;right:8%;top:27%;max-width:31%;padding:.75rem .9rem;border-radius:1rem;background:#fff0cf;border:.2rem solid #87502b;box-shadow:var(--shadow);font-size:clamp(12px,1.4vw,21px);display:none}
+.template-clues .hint-pop{right:20%;top:52%;max-width:28%}
+.hint-pop.show{display:block}
+.feedback{z-index:70}
+
+@media (max-aspect-ratio: 4/5){
+  body::after{content:"Para una mejor visualización, puedes girar el dispositivo a horizontal.";position:fixed;left:50%;bottom:.5rem;transform:translateX(-50%);z-index:20000;background:rgba(59,36,23,.85);color:#fff;padding:.35rem .65rem;border-radius:.6rem;font-size:11px;pointer-events:none}
+}
+
+/* AJUSTE CALENDARIO OFICIAL — alinea texto con las 35 casillas reales del asset */
+.calendar-month{
+  left:17.1%; top:7.15%; width:65.8%; height:11.9%;
+  font-size:clamp(14px,3.25cqw,33px);
+}
+.calendar-weekdays{
+  left:8.90%; top:23.30%; width:80.15%; height:7.95%;
+  grid-template-columns:repeat(7,1fr); column-gap:1.05%;
+}
+.calendar-weekdays div{
+  padding:0 .08rem; line-height:1; font-size:clamp(7px,1.72cqw,17px);
+  white-space:nowrap; overflow:hidden;
+}
+.calendar-weekdays div:nth-child(3){font-size:clamp(6px,1.48cqw,15px)}
+.calendar-days{
+  left:8.55%; top:32.33%; width:79.90%; height:51.60%;
+  grid-template-columns:repeat(7,1fr);
+  grid-template-rows:repeat(6,1fr);
+  column-gap:1.05%; row-gap:1.95%;
+}
+.cal-cell{
+  font-size:clamp(10px,3.05cqw,27px);
+  line-height:1; padding:0; margin:0; border-radius:.65rem;
+  display:flex; align-items:center; justify-content:center;
+}
+
+
+/* Ajuste automático para textos largos: mantiene nombres completos centrados sin parches. */
+.fit-long{font-size:.86em!important;line-height:1.03!important}
+.fit-xlong{font-size:.72em!important;line-height:1.01!important}
+.fit-xxlong{font-size:.60em!important;line-height:1!important}
+.completion-sequence.fit-long{font-size:clamp(12px,1.28vw,20px)!important}
+.completion-sequence.fit-xlong{font-size:clamp(11px,1.10vw,18px)!important}
+.completion-sequence.fit-xxlong{font-size:clamp(10px,.96vw,16px)!important}
+
+.calendar-days{background:#fff0cf;border-radius:.5rem;gap:1px}.cal-cell{background:#fff7e5;border:1px solid #d9b47b}.cal-cell:disabled{background:#f5e4c3}
+.pro-dialog{border:0;border-radius:24px;background:#fff7e6;color:#382517;width:min(720px,94vw);max-height:90dvh;padding:0;box-shadow:0 24px 90px #0006;font:700 17px var(--font)}.pro-dialog::backdrop{background:#12251bcc;backdrop-filter:blur(5px)}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 24px;background:#254e38;color:#fff5d5}.dialog-head h2{margin:0;font-size:23px}.dialog-head button{border:0;background:#ffffff20;border-radius:50%;width:38px;height:38px;color:white;font-size:26px;cursor:pointer}
+.dialog-body{padding:24px;line-height:1.5;font-weight:500}.dialog-body h3{font-size:24px;margin:0 0 10px}.dialog-body p{margin:8px 0 16px}.mission-number{color:#3c7951;text-transform:uppercase;letter-spacing:2px;font-size:12px;font-weight:900}.mission-example{padding:18px;border-radius:14px;background:#efe3c7;border-left:4px solid #aa7d39;margin:18px 0;font-weight:700}.mission-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.mission-actions button{font-size:17px}.guide-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}.guide-tabs button{font-size:15px;min-height:38px}.guide-tabs .active{background:#dcebcf;border-color:#3c7951}
+.guide-calendar-head{display:flex;gap:10px;align-items:center;justify-content:center;margin:12px 0}.guide-calendar-head select{padding:10px;border-radius:10px;border:1px solid #b58d54;background:#fffdf6;font-size:18px;color:#382517}.guide-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}.guide-grid span{padding:8px 1px;border-radius:7px;background:#f0e7d3;font-size:15px}.guide-grid .weekday{background:none;font-size:12px;font-weight:900}.guide-grid .holiday{background:#e6d09f;color:#573b18;box-shadow:inset 0 0 0 1px #b38a41}.guide-holidays{font-size:15px;margin-top:16px}.guide-holidays p{margin:5px 0}.guide-concepts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.concept-card{padding:15px;background:#f0e6cf;border-radius:14px;text-align:left;border:1px solid #d5bd93;color:#382517;cursor:pointer}.concept-card strong{display:block;font-size:16px}.concept-card small{font-size:12px;color:#62533d}
+.notebook-challenge{position:absolute;z-index:24;right:1.3%;top:30%;min-height:34px;padding:.5rem .6rem;font-size:clamp(10px,1.1vw,17px)}
+.notebook-map{position:absolute;z-index:24;left:8.2%;bottom:2.2%;min-height:30px;padding:.4rem .65rem;font-size:clamp(10px,1.05vw,16px)}
+.pro-dialog button:focus-visible,.pro-dialog select:focus-visible{outline:3px solid #146bba;outline-offset:3px}
+@media(max-width:600px){.pro-dialog .dialog-body{padding:16px}.pro-dialog .guide-concepts{grid-template-columns:1fr}.pro-dialog .dialog-head{padding:15px}.pro-dialog .dialog-head h2{font-size:20px}.notebook-challenge,.notebook-map{min-height:24px;padding:4px}}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="screen-start" class="screen active" aria-label="Pantalla de inicio">
+    <div id="startStage" class="stage">
+      <img class="bg" src="assets/start.png" alt="Pantalla de inicio de Misión: Domina el Calendario" draggable="false">
+      <button id="startBtn" class="start-hotspot" aria-label="Comenzar"></button>
+      <button id="startAudio" class="start-hotspot" aria-label="Escuchar bienvenida"></button>
+      <button id="startFullscreen" class="start-hotspot" aria-label="Pantalla completa"></button>
+      <button id="startSettings" class="start-hotspot" aria-label="Configuración"></button>
+      <div class="start-credit" aria-label="Autoría">Fonoaudióloga María José Villa Ortega</div>
+    </div>
+  </section>
+
+  <section id="screen-worlds" class="screen" aria-label="Mapa de mundos">
+    <div id="worldsStage" class="stage">
+      <img class="bg" src="assets/worlds.png" alt="Mapa de mundos" draggable="false">
+      <div id="worldGrid" class="world-grid"></div>
+      <div id="compactCollection" class="compact-collection" aria-label="Mi colección"></div>
+      <button id="openCollectionBtn" aria-label="Ver colección" title="Ver colección"></button>
+      <button id="worldHome" title="Inicio" aria-label="Inicio"></button>
+      <button id="worldReset" title="Reiniciar juego" aria-label="Reiniciar juego">↻</button>
+      <div class="world-controls" aria-label="Controles del mapa">
+        <button class="ui-circle" id="worldAudio" title="Escuchar pantalla" aria-label="Escuchar pantalla"></button>
+        <button class="ui-circle" id="worldFullscreen" title="Pantalla completa" aria-label="Pantalla completa"></button>
+        <button class="ui-circle" id="worldSettings" title="Configuración" aria-label="Configuración"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-challenge" class="screen" aria-label="Desafío">
+    <div id="challengeStage" class="stage challenge-stage">
+      <img id="challengeBg" class="bg challenge-bg" src="" alt="" draggable="false">
+      <button class="ui-circle challenge-back" id="challengeBack" title="Volver a mundos" aria-label="Volver a mundos">←</button>
+      <div class="hud brown-text" aria-label="Progreso del mundo">
+        <div id="hudTitle" class="hud-title"></div>
+        <div class="progress-wrap"><span id="progressLabel" class="progress-label"></span><div id="progressSegments" class="progress-segments"></div></div>
+      </div>
+      <div class="challenge-controls">
+        <button class="ui-circle" id="challengeAudio" title="Escuchar instrucción y pregunta" aria-label="Escuchar instrucción y pregunta">🔊</button>
+        <button class="ui-circle" id="challengeSettings" title="Configuración" aria-label="Configuración">⚙</button>
+        <button class="ui-circle" id="challengeFullscreen" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+      </div>
+      <button class="ui-circle challenge-hint" id="challengeHint" title="Pista" aria-label="Pista">💡</button>
+      <div id="instructionArea" class="instruction-area"></div>
+      <div id="promptArea" class="prompt-area"></div>
+      <div id="answerArea" class="answer-area"></div>
+      <button id="multiCheck" class="ui-button primary multi-check">Comprobar</button>
+      <div id="hintPop" class="hint-pop"></div>
+      <div id="feedback" class="feedback"></div>
+    </div>
+  </section>
+
+  <section id="screen-collection" class="screen" aria-label="Mi colección">
+    <div id="collectionStage" class="stage">
+      <img class="bg" src="assets/collection.png" alt="Mi colección" draggable="false">
+      <button class="ui-circle collection-back" id="collectionBack" title="Volver" aria-label="Volver">←</button>
+      <div id="collectionSlots" class="collection-slots"></div>
+      <div class="collection-controls">
+        <button class="ui-circle" id="collectionAudio" title="Escuchar" aria-label="Escuchar">🔊</button>
+        <button class="ui-circle" id="collectionFullscreen" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-complete" class="screen" aria-label="Mundo completado">
+    <div id="completeStage" class="stage sky">
+      <div class="complete-panel">
+        <img src="assets/world_complete.png" alt="Panel de mundo completado" draggable="false">
+        <div id="completeTitle" class="complete-title brown-text"></div>
+        <div id="completeText" class="complete-text brown-text"></div>
+        <div id="completeItem" class="complete-item"></div>
+        <div id="completeNext" class="complete-next brown-text"></div>
+        <button id="completeContinue" class="complete-continue" aria-label="Continuar"></button>
+        <button id="completeAudio" class="ui-circle complete-audio" title="Escuchar" aria-label="Escuchar">🔊</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-final" class="screen" aria-label="Celebración final">
+    <div id="finalStage" class="stage">
+      <img class="bg" src="assets/finale.png" alt="Celebración final" draggable="false">
+      <canvas id="confettiCanvas"></canvas>
+      <div class="final-controls">
+        <button id="repeatCelebration" class="ui-button primary">🎉 Repetir celebración</button>
+        <button id="backToWorlds" class="ui-button">⌂ Volver a los mundos</button>
+        <button id="resetFromFinal" class="ui-button danger">↻ Reiniciar</button>
+        <button id="finalAudio" class="audio-mini" aria-label="Escuchar celebración">🔊</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="settingsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="modal">
+    <h2 id="settingsTitle">Configuración <button class="audio-mini" data-speak="Configuración">🔊</button></h2>
+    <div class="setting-row"><span>Audio manual</span><button id="audioToggle" class="ui-button"></button></div>
+    <div class="setting-row"><span>Velocidad de voz</span><select id="voiceSpeed"><option value="normal">Normal</option><option value="slow">Lenta</option></select></div>
+    <div class="setting-row"><span>Pantalla completa</span><button id="settingsFullscreen" class="ui-button">⛶ Cambiar</button></div>
+    <div class="modal-row"><button id="settingsReset" class="ui-button danger">↻ Reiniciar progreso</button><button id="settingsClose" class="ui-button primary">Cerrar</button></div>
+  </div>
+</div>
+
+<div id="resetModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+  <div class="modal">
+    <h2 id="resetTitle">¿Quieres reiniciar el juego? <button class="audio-mini" id="resetAudio">🔊</button></h2>
+    <p id="resetText">Se borrará todo tu progreso, los mundos completados y los elementos de tu colección. ¿Estás segura de continuar?</p>
+    <div class="modal-row"><button id="resetCancel" class="ui-button">Cancelar</button><button id="resetConfirm" class="ui-button danger">Sí, reiniciar</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const A='assets/';
+const STORAGE='misionCalendario2026_v1';
+const BROWN='#3b2417';
+const DAYS=['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'];
+const DAYS_L=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const ITEM_FILES=['item01_ball.png','item02_bucket.png','item03_notebook.png','item04_eggs.png','item05_scarf.png','item06_umbrella.png','item07_kite.png','item08_flowers.png','item09_pumpkin.png','item10_tree.png'];
+const ITEM_NAMES=['Pelota de playa','Balde y palita de arena','Cuaderno y lápiz','Huevitos de Pascua','Bufanda','Paraguas','Volantín','Ramo de flores','Calabaza','Árbol de Navidad'];
+const WORLD_NAMES=['Antes y Después','Números 1–31','Días de la Semana','Meses del Año','Día + Número','Ayer, Hoy y Mañana','Calendario Chile 2026','Cambio de Mes','Calendario Detective','Chile 2026'];
+// Feriados nacionales 2026; no incluye feriados regionales.
+// Fuente: https://www.gob.cl/noticias/feriados-2026-revisa-cuantos-habra-y-cuales-son-irrenunciables/
+const HOLIDAYS=[
+  {m:1,d:1,n:'Año Nuevo'}, {m:4,d:3,n:'Viernes Santo'}, {m:4,d:4,n:'Sábado Santo'},
+  {m:5,d:1,n:'Día del Trabajo'}, {m:5,d:21,n:'Glorias Navales'}, {m:6,d:21,n:'Día Nacional de los Pueblos Indígenas'},
+  {m:6,d:29,n:'San Pedro y San Pablo'}, {m:7,d:16,n:'Virgen del Carmen'}, {m:8,d:15,n:'Asunción de la Virgen'},
+  {m:9,d:18,n:'Independencia Nacional'}, {m:9,d:19,n:'Glorias del Ejército'}, {m:10,d:12,n:'Encuentro de Dos Mundos'},
+  {m:10,d:31,n:'Día de las Iglesias Evangélicas y Protestantes'}, {m:11,d:1,n:'Día de Todos los Santos'},
+  {m:12,d:8,n:'Inmaculada Concepción'}, {m:12,d:25,n:'Navidad'}
+];
+const POSITIVE=['¡Lo lograste!','¡Muy bien!','¡Excelente!','¡Genial!','¡Correcto!','¡Buen trabajo!','¡Sigue así!','¡Muy bien hecho!'];
+const NEGATIVE=['Inténtalo otra vez.','Sigue intentando.','Revisa bien.','Observa tu calendario.','Mira nuevamente las opciones.','Fíjate qué va antes y qué va después.','Revisa el número.','Revisa el día de la semana.','Observa el orden de los meses.'];
+const TEMPLATE_BG={selection:'challenge_selection.png',drag:'challenge_drag.png',relation:'challenge_relation.png',detect:'challenge_detect.png',calendar:'challenge_calendar.png',clues:'challenge_clues.png'};
+
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const choice=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x};
+const uniq=a=>[...new Set(a)];
+const mod=(n,m)=>((n%m)+m)%m;
+const dateObj=(m,d)=>new Date(2026,m-1,d,12,0,0);
+const isoDate=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+const dayIndexMon=dt=>(dt.getDay()+6)%7;
+const dayName=dt=>DAYS_L[dayIndexMon(dt)];
+const fmtDate=dt=>`${dayName(dt)} ${dt.getDate()} de ${MONTHS[dt.getMonth()]}${dt.getFullYear()===2026?'':' de '+dt.getFullYear()}`;
+const fmtShort=dt=>`${dayName(dt)} ${dt.getDate()}`;
+const addDays=(dt,n)=>{const x=new Date(dt);x.setDate(x.getDate()+n);return x};
+const daysInMonth=m=>new Date(2026,m,0).getDate();
+const randDate=(opts={})=>{
+  const {avoidBoundary=false,months=null}=opts;
+  const ms=months||[1,2,3,4,5,6,7,8,9,10,11,12];
+  while(true){const m=choice(ms), dim=daysInMonth(m), d=rand(1,dim);if(avoidBoundary&&(d<=2||d>=dim-1))continue;return dateObj(m,d)}
+};
+const boundaryPair=()=>{const m=rand(1,11);const last=dateObj(m,daysInMonth(m));return {last,next:addDays(last,1),month:m}};
+const correctCalendarMonths=[1,2,3,4,5,6,7,8,9,10,11,12];
+const distractDates=(dt,count=3)=>{
+  const candidates=[addDays(dt,-2),addDays(dt,-1),addDays(dt,1),addDays(dt,2),addDays(dt,7),addDays(dt,-7)].filter(x=>x.getFullYear()===2026);
+  return shuffle(candidates).slice(0,count);
+};
+
+function initialState(){return {unlockedWorld:1,completedWorlds:[],worldProgress:{},collected:[],settings:{audio:true,speed:'normal'}}}
+let state=loadState();
+let session={world:1,index:0,practice:false,challenge:null,selectedMulti:new Set(),relation:null,drag:null};
+function loadState(){try{const s=JSON.parse(localStorage.getItem(STORAGE));if(s&&s.settings)return Object.assign(initialState(),s)}catch(e){}return initialState()}
+function saveState(){try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch(e){/* El juego sigue funcionando aunque el navegador bloquee el guardado local. */}}
+function resetState(){state=initialState();saveState();session={world:1,index:0,practice:false,challenge:null,selectedMulti:new Set(),relation:null,drag:null};renderWorlds();showScreen('screen-start')}
+function showScreen(id){clearTimeout(feedbackTimer);answerLocked=false;$$('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0)}
+
+/* Speech */
+let voices=[];
+function refreshVoices(){voices=('speechSynthesis' in window)?speechSynthesis.getVoices()||[]:[]}
+refreshVoices(); if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=refreshVoices;
+function bestVoice(){
+  const es=voices.filter(v=>/^es(-|$)/i.test(v.lang));
+  return es.find(v=>/es-CL/i.test(v.lang)&&/(paulina|sofia|monica|female|mujer|isabel|helena)/i.test(v.name)) ||
+         es.find(v=>/es-CL/i.test(v.lang)) ||
+         es.find(v=>/(paulina|sofia|monica|female|mujer|isabel|helena)/i.test(v.name)) || es[0] || voices[0];
+}
+function speak(text){if(!state.settings.audio||!('speechSynthesis' in window)||!text)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text).replace(/[←→]/g,' '));u.lang='es-CL';const v=bestVoice();if(v)u.voice=v;u.rate=state.settings.speed==='slow'?.80:.93;u.pitch=1;u.volume=1;speechSynthesis.speak(u)}
+function audioBtn(text,cls='audio-mini'){const b=document.createElement('button');b.className=cls;b.textContent='🔊';b.type='button';b.setAttribute('aria-label','Escuchar');b.disabled=!state.settings.audio;b.addEventListener('click',e=>{e.stopPropagation();speak(text)});return b}
+function updateAudioButtons(){$$('.audio-mini').forEach(b=>b.disabled=!state.settings.audio)}
+
+/* Fullscreen */
+async function toggleFullscreen(){
+  try{
+    const root=document.documentElement;
+    const active=document.fullscreenElement||document.webkitFullscreenElement;
+    if(!active){
+      if(root.requestFullscreen) await root.requestFullscreen({navigationUI:'hide'}).catch(()=>root.requestFullscreen());
+      else if(root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+    }else{
+      if(document.exitFullscreen) await document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  }catch(e){console.warn('Pantalla completa no disponible',e)}
+}
+
+/* World screen */
+function renderWorlds(){
+  const grid=$('#worldGrid');grid.innerHTML='';
+  WORLD_NAMES.forEach((name,i)=>{
+    const id=i+1, completed=state.completedWorlds.includes(id), unlocked=id<=state.unlockedWorld;
+    const card=document.createElement('button');card.className='world-card'+(!unlocked?' locked':'')+(completed?' completed':'')+(id===state.unlockedWorld&&!completed?' current':'');
+    card.disabled=!unlocked;
+    const prog=completed?10:(state.worldProgress[id]||0);
+    const stateClass=completed?'completed':(!unlocked?'locked':'available');
+    const stateGlyph=completed?'✓':'';
+    const statusText=completed?'Completado':(!unlocked?'Bloqueado':prog?`${prog}/10 completados`:'Disponible');
+    card.innerHTML=`<span class="world-state-icon ${stateClass}" aria-hidden="true">${stateGlyph}</span>`;
+    card.setAttribute('aria-label',`Mundo ${id}. ${name}. ${statusText}.`);
+    card.addEventListener('click',()=>startWorld(id));grid.appendChild(card);
+  });
+  const cc=$('#compactCollection');cc.innerHTML='';
+  ITEM_FILES.forEach((file,i)=>{const s=document.createElement('div');s.className='collection-mini-slot'+(state.collected.includes(i+1)?' unlocked':'');s.innerHTML=`<img src="${A+file}" alt="${state.collected.includes(i+1)?ITEM_NAMES[i]:'Elemento por descubrir'}">`;cc.appendChild(s)});
+}
+function startWorld(id){if(id>state.unlockedWorld)return;session.world=id;session.practice=state.completedWorlds.includes(id);session.index=session.practice?0:(state.worldProgress[id]||0);if(session.index>=10)session.index=0;loadChallenge()}
+
+/* Challenge common */
+function setTemplate(type){
+  const st=$('#challengeStage');st.className=`stage challenge-stage template-${type}`;$('#challengeBg').src=A+TEMPLATE_BG[type];
+}
+function renderProgress(){
+  $('#hudTitle').textContent=`Mundo ${session.world}: ${WORLD_NAMES[session.world-1]}`;
+  $('#progressLabel').textContent=`${session.index+1}/10`;
+  $('#progressSegments').innerHTML='';
+}
+function clearChallengeAreas(){
+  $('#instructionArea').innerHTML='';$('#promptArea').innerHTML='';$('#answerArea').innerHTML='';$('#hintPop').classList.remove('show');$('#hintPop').innerHTML='';$('#feedback').className='feedback';$('#feedback').innerHTML='';$('#multiCheck').classList.remove('show');session.selectedMulti=new Set();
+}
+function fitText(el,text){const n=String(text||'').trim().length;if(n>=52)el.classList.add('fit-xxlong');else if(n>=38)el.classList.add('fit-xlong');else if(n>=27)el.classList.add('fit-long');return el}
+function addTextWithAudio(el,text){const span=document.createElement('span');span.textContent=text;fitText(span,text);el.appendChild(span);el.appendChild(audioBtn(text))}
+function loadChallenge(){
+  if(session.index>=10){finishWorld();return}
+  showScreen('screen-challenge');renderProgress();clearChallengeAreas();
+  const ch=generateChallenge(session.world,session.index);session.challenge=ch;setTemplate(ch.type);renderProgress();
+  const instructionText=(ch.type==='calendar'&&ch.prompt)?`${ch.instruction} ${ch.prompt}`:ch.instruction;
+  addTextWithAudio($('#instructionArea'),instructionText);
+  renderChallenge(ch);
+}
+function challengeAudioText(){const ch=session.challenge;if(!ch)return'';return [ch.instruction,ch.prompt||'',...(ch.options||[]).map(o=>typeof o==='string'?o:o.text||'')].join('. ')}
+function showHint(){const ch=session.challenge;const extra=ch?.hint||'';const txt=/observa tu calendario/i.test(extra)?extra:`Observa tu calendario.${extra?' '+extra:''}`;const hp=$('#hintPop');hp.innerHTML='';addTextWithAudio(hp,txt);hp.classList.add('show');setTimeout(()=>hp.classList.remove('show'),6000)}
+let feedbackTimer=null,answerLocked=false;
+function feedback(ok,specific=''){
+  if(answerLocked)return;clearTimeout(feedbackTimer);if(ok)answerLocked=true;
+  const box=$('#feedback');box.innerHTML='';const text=ok?choice(POSITIVE):`${choice(NEGATIVE)}${specific?' '+specific:''}`;addTextWithAudio(box,text);box.className='feedback show '+(ok?'good':'bad');
+  if(ok){feedbackTimer=setTimeout(()=>{box.classList.remove('show');advanceChallenge()},1000)}else{feedbackTimer=setTimeout(()=>box.classList.remove('show'),2600)}
+}
+function advanceChallenge(){
+  session.index++;
+  if(!session.practice){state.worldProgress[session.world]=Math.max(state.worldProgress[session.world]||0,session.index);saveState()}
+  loadChallenge();
+}
+function finishWorld(){
+  const w=session.world;
+  if(session.practice){showComplete(true);return}
+  if(!state.completedWorlds.includes(w))state.completedWorlds.push(w);
+  if(!state.collected.includes(w))state.collected.push(w);
+  state.worldProgress[w]=10;
+  if(w<10)state.unlockedWorld=Math.max(state.unlockedWorld,w+1);saveState();renderWorlds();
+  if(w===10){showFinal();}else{showComplete(false)}
+}
+function showComplete(practice){
+  showScreen('screen-complete');
+  const w=session.world;$('#completeTitle').textContent=practice?'¡Práctica completada!':'¡Mundo completado!';
+  $('#completeText').textContent=practice?`Terminaste nuevamente los 10 desafíos de ${WORLD_NAMES[w-1]}.`:`Completaste correctamente los 10 desafíos de ${WORLD_NAMES[w-1]}.`;
+  $('#completeItem').innerHTML=practice?'':`<img src="${A+ITEM_FILES[w-1]}" alt="${ITEM_NAMES[w-1]}">`;
+  $('#completeNext').textContent=practice?'Puedes volver a practicar cuando quieras.':`Elemento recolectado: ${ITEM_NAMES[w-1]}. ${w<10?'Se desbloqueó: '+WORLD_NAMES[w]+'.':''}`;
+  $('#completeContinue').onclick=()=>{renderWorlds();showScreen('screen-worlds')};
+  $('#completeAudio').onclick=()=>speak(`${$('#completeTitle').textContent}. ${$('#completeText').textContent}. ${$('#completeNext').textContent}`);
+}
+
+function renderChallenge(ch){
+  switch(ch.type){case'selection':renderSelection(ch);break;case'drag':renderDrag(ch);break;case'relation':renderRelation(ch);break;case'detect':renderDetect(ch);break;case'calendar':renderCalendarChallenge(ch);break;case'clues':renderClues(ch);break;}
+}
+
+function renderSelection(ch){
+  addTextWithAudio($('#promptArea'),ch.prompt);
+  const area=$('#answerArea');area.innerHTML='';area.dataset.count=ch.options.length;
+  ch.options.forEach((opt,i)=>{const text=typeof opt==='string'?opt:opt.text;const b=document.createElement('button');b.className='answer-btn';b.type='button';const span=document.createElement('span');span.textContent=text;fitText(span,text);b.appendChild(span);b.appendChild(audioBtn(text));
+    if(ch.multi){b.addEventListener('click',()=>{if(session.selectedMulti.has(i)){session.selectedMulti.delete(i);b.classList.remove('selected')}else{session.selectedMulti.add(i);b.classList.add('selected')}$('#multiCheck').classList.toggle('show',session.selectedMulti.size>0)})}
+    else b.addEventListener('click',()=>{const ok=Array.isArray(ch.correct)?ch.correct.includes(i):i===ch.correct;if(ok)feedback(true);else{b.classList.add('wrong-flash');setTimeout(()=>b.classList.remove('wrong-flash'),500);feedback(false,ch.hint)}});
+    area.appendChild(b)
+  });
+  if(ch.multi){const mb=$('#multiCheck');mb.classList.add('show');mb.onclick=()=>{const target=new Set(ch.correct);const ok=session.selectedMulti.size===target.size&&[...session.selectedMulti].every(x=>target.has(x));if(ok)feedback(true);else feedback(false,ch.hint)}}
+}
+
+function renderDrag(ch){
+  const prompt=$('#promptArea');prompt.innerHTML='';
+  const layout=document.createElement('div');
+  const isComplete=ch.slots.length===1;
+  layout.className=`drag-layout ${isComplete?'drag-complete':'drag-order'}`;
+  layout.dataset.count=String(Math.min(4,ch.slots.length));
+
+  ch.slots.forEach((slot,i)=>{
+    const d=document.createElement('div');d.className='drop-slot';d.dataset.slot=i;
+    const label=slot.label||'';
+    if(isComplete){
+      d.classList.add('completion-slot');
+      const seq=document.createElement('div');seq.className='completion-sequence';fitText(seq,label);
+      if(label.includes('___')){
+        const parts=label.split('___');
+        const before=document.createElement('span');before.textContent=parts.shift()||'';
+        const blank=document.createElement('span');blank.className='completion-blank';blank.innerHTML='<span class="slot-value"></span>';
+        const after=document.createElement('span');after.textContent=parts.join('___')||'';
+        if(before.textContent.trim())seq.appendChild(before);seq.appendChild(blank);if(after.textContent.trim())seq.appendChild(after);
+      }else{
+        const lab=document.createElement('span');lab.textContent=label;lab.className='completion-label';fitText(lab,label);
+        const blank=document.createElement('span');blank.className='completion-blank';blank.innerHTML='<span class="slot-value"></span>';
+        if(label.trim())seq.appendChild(lab);seq.appendChild(blank);
+      }
+      d.appendChild(seq);
+    }else{
+      const lab=document.createElement('span');lab.className='slot-label';lab.textContent=label;fitText(lab,label);
+      const value=document.createElement('span');value.className='slot-value';
+      d.append(lab,value);
+    }
+    layout.appendChild(d)
+  });
+  prompt.appendChild(layout);
+
+  const area=$('#answerArea');area.innerHTML='';area.dataset.count=String(ch.items.length);session.drag={placements:{},selected:null};
+  ch.items.forEach((item,i)=>{const card=document.createElement('div');card.className='drag-card';card.tabIndex=0;card.dataset.item=i;const txt=document.createElement('span');txt.textContent=item.text;fitText(txt,item.text);card.appendChild(txt);card.appendChild(audioBtn(item.text));
+    card.addEventListener('click',e=>{if(e.target.closest('.audio-mini'))return;$$('.drag-card').forEach(c=>c.classList.remove('selected'));session.drag.selected=i;card.classList.add('selected')});
+    card.addEventListener('pointerdown',startPointerDrag);area.appendChild(card)
+  });
+  $$('.drop-slot').forEach(s=>s.addEventListener('click',()=>{if(session.drag.selected!==null)placeDrag(session.drag.selected,Number(s.dataset.slot),ch)}));
+}
+let dragPointer=null;
+function startPointerDrag(e){if(e.target.closest('.audio-mini'))return;const card=e.currentTarget;if(card.classList.contains('used'))return;const idx=Number(card.dataset.item);const ghost=document.createElement('div');ghost.className='drag-ghost';ghost.textContent=session.challenge.items[idx].text;document.body.appendChild(ghost);ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';dragPointer={idx,ghost,card};card.setPointerCapture?.(e.pointerId);card.addEventListener('pointermove',movePointerDrag);card.addEventListener('pointerup',endPointerDrag,{once:true});}
+function movePointerDrag(e){if(!dragPointer)return;dragPointer.ghost.style.left=e.clientX+'px';dragPointer.ghost.style.top=e.clientY+'px'}
+function endPointerDrag(e){if(!dragPointer)return;const {idx,ghost,card}=dragPointer;ghost.remove();card.removeEventListener('pointermove',movePointerDrag);const under=document.elementFromPoint(e.clientX,e.clientY);const slot=under?.closest?.('.drop-slot');if(slot)placeDrag(idx,Number(slot.dataset.slot),session.challenge);dragPointer=null}
+function placeDrag(itemIdx,slotIdx,ch){
+  if(Object.values(session.drag.placements).includes(itemIdx))return;const item=ch.items[itemIdx],slot=ch.slots[slotIdx];if(!slot)return;
+  if(item.target!==slotIdx){feedback(false,ch.hint);return}
+  session.drag.placements[slotIdx]=itemIdx;const sd=$(`.drop-slot[data-slot="${slotIdx}"]`);sd.classList.add('filled');sd.querySelector('.slot-value').textContent=item.text;const cd=$(`.drag-card[data-item="${itemIdx}"]`);cd.classList.add('used');
+  if(Object.keys(session.drag.placements).length===ch.slots.length)feedback(true)
+}
+
+function renderRelation(ch){
+  const p=$('#promptArea');p.innerHTML='';const board=document.createElement('div');board.className='relation-board';const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('relation-svg');board.appendChild(svg);
+  const left=document.createElement('div'),right=document.createElement('div');left.className='pair-column pair-left';right.className='pair-column pair-right';board.append(left,right);session.relation={left:null,matched:0,lines:[]};
+  ch.left.forEach((x,i)=>{const b=pairCard(x.text,'L',i);left.appendChild(b)});ch.right.forEach((x,i)=>{const b=pairCard(x.text,'R',i);right.appendChild(b)});p.appendChild(board);
+  function pairCard(text,side,i){const b=document.createElement('button');b.className='pair-card';fitText(b,text);b.dataset.side=side;b.dataset.idx=i;b.append(document.createTextNode(text));b.appendChild(audioBtn(text));b.onclick=e=>{if(e.target.closest('.audio-mini'))return;relationClick(b,ch)};return b}
+}
+function relationClick(card,ch){const side=card.dataset.side,idx=Number(card.dataset.idx);if(card.classList.contains('matched'))return;if(side==='L'){$$('.pair-card[data-side="L"]').forEach(x=>x.classList.remove('active'));card.classList.add('active');session.relation.left=idx;return}if(session.relation.left===null){feedback(false,'Selecciona primero una tarjeta de la izquierda.');return}const li=session.relation.left;const leftCard=$(`.pair-card[data-side="L"][data-idx="${li}"]`);const ok=ch.left[li].key===ch.right[idx].key;if(!ok){leftCard.classList.remove('active');session.relation.left=null;feedback(false,ch.hint);return}leftCard.classList.remove('active');leftCard.classList.add('matched');card.classList.add('matched');drawRelationLine(leftCard,card);session.relation.left=null;session.relation.matched++;if(session.relation.matched===ch.left.length)feedback(true)}
+function drawRelationLine(a,b){const svg=$('.relation-svg'),board=$('.relation-board');if(!svg||!board)return;const br=board.getBoundingClientRect(),ar=a.getBoundingClientRect(),rr=b.getBoundingClientRect();const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',ar.right-br.left);line.setAttribute('y1',ar.top+ar.height/2-br.top);line.setAttribute('x2',rr.left-br.left);line.setAttribute('y2',rr.top+rr.height/2-br.top);svg.appendChild(line)}
+
+function renderDetect(ch){
+  const p=$('#promptArea');p.innerHTML='';const seq=document.createElement('div');seq.className='detect-sequence';ch.display.forEach(t=>{const d=document.createElement('div');d.className='detect-token';d.textContent=t;fitText(d,t);d.appendChild(audioBtn(t));seq.appendChild(d)});p.appendChild(seq);
+  const area=$('#answerArea');area.dataset.count=ch.options.length;ch.options.forEach((o,i)=>{const b=document.createElement('button');b.className='answer-btn';b.append(document.createTextNode(o));b.appendChild(audioBtn(o));b.onclick=e=>{if(e.target.closest('.audio-mini'))return;if(i===ch.correct)feedback(true);else feedback(false,ch.hint)};area.appendChild(b)})
+}
+
+function renderCalendarChallenge(ch){
+  const p=$('#promptArea');p.innerHTML='';const widget=buildCalendar(ch.month,ch.targetDate,ch);p.appendChild(widget);
+}
+function buildCalendar(month,targetDate,ch){
+  const w=document.createElement('div');w.className='calendar-widget';w.innerHTML=`<img src="${A}calendar.png" alt="Calendario oficial"><div class="calendar-month"></div><div class="calendar-weekdays"></div><div class="calendar-days"></div>`;
+  w.querySelector('.calendar-month').textContent=`${MONTHS[month-1]} 2026`;
+  const wh=w.querySelector('.calendar-weekdays');DAYS.forEach(d=>{const x=document.createElement('div');x.textContent=d;wh.appendChild(x)});
+  const dg=w.querySelector('.calendar-days');const first=dayIndexMon(dateObj(month,1)),dim=daysInMonth(month);for(let i=0;i<42;i++){const b=document.createElement('button');b.className='cal-cell';const day=i-first+1;if(day<1||day>dim){b.disabled=true;b.textContent='';}else{b.textContent=day;b.dataset.day=day;b.setAttribute('aria-label',`${dayName(dateObj(month,day))} ${day} de ${MONTHS[month-1]}`);b.onclick=()=>{if(day===targetDate)feedback(true);else feedback(false,ch.hint)}}dg.appendChild(b)}
+  const read=audioBtn(`Calendario de ${MONTHS[month-1]} de 2026. ${DAYS_L.join(', ')}.`,'calendar-read');w.appendChild(read);return w;
+}
+
+function renderClues(ch){
+  const p=$('#promptArea');p.innerHTML='';const list=document.createElement('div');list.className='clue-list';ch.clues.forEach(c=>{const d=document.createElement('div');d.className='clue-line';fitText(d,c);d.append(document.createTextNode(c));d.appendChild(audioBtn(c));list.appendChild(d)});p.appendChild(list);
+  const area=$('#answerArea');area.dataset.count=ch.options.length;ch.options.forEach((o,i)=>{const b=document.createElement('button');b.className='answer-btn';b.append(document.createTextNode(o));b.appendChild(audioBtn(o));b.onclick=e=>{if(e.target.closest('.audio-mini'))return;if(i===ch.correct)feedback(true);else feedback(false,ch.hint)};area.appendChild(b)})
+}
+
+/* 100 fixed challenge patterns with random 2026 values */
+function generateChallenge(w,i){
+  const ch=WORLD_GENERATORS[w-1](i);
+  ch.id='w'+w+'-p'+(i+1);ch.year=2026;ch.world=w;ch.pattern=i;
+  if(ch.type==='detect'){
+    const order=shuffle(ch.options.map((_,j)=>j));
+    ch.correct=order.indexOf(ch.correct);ch.options=order.map(j=>ch.options[j]);
+  }
+  return ch;
+}
+const WEEK_CYCLE=i=>DAYS_L[mod(i,7)], MONTH_CYCLE=i=>MONTHS[mod(i,12)];
+function base(type,instruction,prompt,hint='Observa tu calendario.'){return {type,instruction,prompt,hint}}
+function optsCorrect(correct,wrong){const arr=shuffle(uniq([correct,...wrong]));return {options:arr,correct:arr.indexOf(correct)}}
+function multiOptions(corrects,wrong){const arr=shuffle(uniq([...corrects,...wrong]));return {options:arr,correct:corrects.map(x=>arr.indexOf(x)),multi:true}}
+
+function world1(i){
+  switch(i){
+    case 0:{const ch=base('drag','Ubica las palabras en el orden correcto.','', 'Recuerda: AYER va antes de HOY y MAÑANA va después.');ch.slots=[{label:'ANTES'},{label:'AHORA'},{label:'DESPUÉS'}];ch.items=shuffle([{text:'AYER',target:0},{text:'HOY',target:1},{text:'MAÑANA',target:2}]);return ch}
+    case 1:{const target=choice(['AYER','MAÑANA']);const correct=target==='AYER'?'ANTES':'DESPUÉS';return Object.assign(base('selection','Selecciona la relación temporal correcta.',`${target} está...`,'Piensa si ocurre antes o después de HOY.'),optsCorrect(correct,[correct==='ANTES'?'DESPUÉS':'ANTES','AHORA']))}
+    case 2:{const ch=base('drag','Ordena la secuencia temporal.','', 'La secuencia es AYER, HOY, MAÑANA.');ch.slots=[{label:'1'},{label:'2'},{label:'3'}];ch.items=shuffle([{text:'AYER',target:0},{text:'HOY',target:1},{text:'MAÑANA',target:2}]);return ch}
+    case 3:{const miss=rand(0,2),vals=['AYER','HOY','MAÑANA'];const ch=base('drag','Completa la palabra que falta.','', 'Observa qué va antes y qué va después.');ch.slots=[{label:`${miss===0?'___':vals[0]}  →  ${miss===1?'___':vals[1]}  →  ${miss===2?'___':vals[2]}`}];ch.items=shuffle([{text:vals[miss],target:0},{text:miss===0?'MAÑANA':'AYER',target:9},{text:'DESPUÉS',target:9}]);return ch}
+    case 4:return Object.assign(base('selection','Elige dos tarjetas correctas.','Selecciona las dos palabras que están a los lados de HOY.','Necesitas AYER y MAÑANA.'),multiOptions(['AYER','MAÑANA'],['AHORA']));
+    case 5:{const statements=['AYER está antes de HOY','MAÑANA está después de HOY','AYER está después de HOY'];return Object.assign(base('detect','Detecta la relación incorrecta.','', 'Revisa la ubicación de AYER respecto de HOY.'),{display:statements,options:statements,correct:2})}
+    case 6:return Object.assign(base('relation','Relaciona cada concepto temporal.','', 'AYER corresponde a antes; MAÑANA corresponde a después.'),{left:[{text:'AYER',key:'a'},{text:'HOY',key:'h'},{text:'MAÑANA',key:'d'}],right:shuffle([{text:'ANTES',key:'a'},{text:'AHORA',key:'h'},{text:'DESPUÉS',key:'d'}])});
+    case 7:{const dir=choice(['antes','después']);const correct=dir==='antes'?'AYER':'MAÑANA';return Object.assign(base('selection','Toca la palabra que corresponde.',`¿Qué palabra indica ${dir} de HOY?`,'Observa la secuencia AYER, HOY, MAÑANA.'),optsCorrect(correct,['HOY',correct==='AYER'?'MAÑANA':'AYER']))}
+    case 8:{const truth=choice([true,false]);const st=truth?'MAÑANA está después de HOY.':'AYER está después de HOY.';return Object.assign(base('selection','Indica si la afirmación es verdadera o falsa.',st,'Piensa en la secuencia temporal.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:{return Object.assign(base('clues','Resuelve las pistas.','', 'Busca la palabra que queda entre AYER y MAÑANA.'),{clues:['Estoy después de AYER.','Estoy antes de MAÑANA.'],...optsCorrect('HOY',['AYER','MAÑANA'])})}
+  }
+}
+function world2(i){
+  const n=rand(2,30);
+  switch(i){
+    case 0:{const ch=base('drag','Coloca el número anterior y el siguiente.','', 'El anterior es uno menos y el siguiente es uno más.');ch.slots=[{label:`ANTES DE ${n}`},{label:`DESPUÉS DE ${n}`}];ch.items=shuffle([{text:String(n-1),target:0},{text:String(n+1),target:1},{text:String(n===2?n+2:n-2),target:9}]);return ch}
+    case 1:{const dir=choice(['antes','después']),c=dir==='antes'?n-1:n+1;return Object.assign(base('selection',`Selecciona el número que va ${dir}.`,`Número central: ${n}`,'Avanza o retrocede solo un número.'),optsCorrect(String(c),[String(n),String(dir==='antes'?n+1:n-1)]))}
+    case 2:{const s=rand(1,27),vals=[s,s+1,s+2,s+3];const ch=base('drag','Ordena los números de menor a mayor.','', 'Observa la sucesión numérica.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:String(v),target:j})));return ch}
+    case 3:{const s=rand(1,28),miss=rand(1,2),vals=[s,s+1,s+2,s+3];const ch=base('drag','Completa el número que falta.','', 'Cuenta de uno en uno.');ch.slots=[{label:`${vals.map((v,j)=>j===miss?'___':v).join('  →  ')}`}];ch.items=shuffle([{text:String(vals[miss]),target:0},{text:String(vals[miss]+2<=31?vals[miss]+2:vals[miss]-1),target:9},{text:String(Math.max(1,vals[miss]-2)),target:9}]);return ch}
+    case 4:{const a=rand(2,15),b=rand(16,30);return Object.assign(base('selection','Selecciona las dos respuestas correctas.',`Elige el número inmediatamente anterior a ${a} y el inmediatamente posterior a ${b}.`,'Resuelve una consigna a la vez.'),multiOptions([String(a-1),String(b+1)],[String(a+1)]))}
+    case 5:{const s=rand(2,26),wrong=s+5,disp=[s,s+1,wrong,s+3];return Object.assign(base('detect','Encuentra el número que rompe la secuencia.','', 'La secuencia debe avanzar de uno en uno.'),{display:disp.map(String),options:disp.map(String),correct:2})}
+    case 6:{const vals=shuffle([rand(3,10),rand(12,19),rand(22,29)]);return Object.assign(base('relation','Relaciona cada número con el número que va después.','', 'El siguiente es uno más.'),{left:vals.map(v=>({text:String(v),key:String(v)})),right:shuffle(vals.map(v=>({text:String(v+1),key:String(v)})))})}
+    case 7:{const c=rand(1,31);return Object.assign(base('selection','Encuentra el número indicado.',`Toca el número ${c}.`,'Mira nuevamente las opciones.'),optsCorrect(String(c),shuffle([c-1,c+1,c+2].filter(x=>x>=1&&x<=31)).map(String)))}
+    case 8:{const a=rand(2,30),truth=choice([true,false]),st=truth?`Antes de ${a} está ${a-1}.`:`Después de ${a} está ${a-1}.`;return Object.assign(base('selection','Analiza la afirmación.',st,'Revisa si debes avanzar o retroceder.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:{const x=rand(2,30);return Object.assign(base('clues','Descubre el número secreto.','', 'Está exactamente entre los dos números de las pistas.'),{clues:[`Estoy después de ${x-1}.`,`Estoy antes de ${x+1}.`],...optsCorrect(String(x),[String(x-1),String(x+1)])})}
+  }
+}
+function world3(i){
+  const d=rand(0,6);
+  switch(i){
+    case 0:{const ch=base('drag','Ubica el día anterior y el día siguiente.','', 'Observa el orden de los días de la semana.');ch.slots=[{label:`ANTES DE ${DAYS[d]}`},{label:`DESPUÉS DE ${DAYS[d]}`}];ch.items=shuffle([{text:WEEK_CYCLE(d-1),target:0},{text:WEEK_CYCLE(d+1),target:1},{text:WEEK_CYCLE(d+2),target:9}]);return ch}
+    case 1:{const dir=choice(['antes','después']),c=WEEK_CYCLE(d+(dir==='antes'?-1:1));return Object.assign(base('selection',`Selecciona el día que va ${dir}.`,`Día central: ${DAYS_L[d]}`,'Recorre la semana en orden.'),optsCorrect(c,[WEEK_CYCLE(d),WEEK_CYCLE(d+(dir==='antes'?1:-1))]))}
+    case 2:{const vals=[0,1,2,3].map(k=>WEEK_CYCLE(d+k));const ch=base('drag',`Ordena los días comenzando por ${WEEK_CYCLE(d)}.`,'', 'Avanza un día en cada posición, incluso al cambiar de semana.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const miss=rand(1,2),vals=[0,1,2,3].map(k=>WEEK_CYCLE(d+k));const ch=base('drag','Completa el día que falta.','', 'Observa qué día está antes y cuál después.');ch.slots=[{label:vals.map((v,j)=>j===miss?'___':v).join('  →  ')}];ch.items=shuffle([{text:vals[miss],target:0},{text:WEEK_CYCLE(d+5),target:9},{text:WEEK_CYCLE(d+6),target:9}]);return ch}
+    case 4:{const c=rand(0,6),before=WEEK_CYCLE(c-1),after=WEEK_CYCLE(c+1),distractor=WEEK_CYCLE(c+2);return Object.assign(base('selection','Selecciona las dos respuestas correctas.',`¿Qué día va antes y qué día va después de ${WEEK_CYCLE(c)}?`,'Recorre los días de la semana en orden.'),multiOptions([before,after],[distractor]))}
+    case 5:{const vals=[WEEK_CYCLE(d),WEEK_CYCLE(d+1),WEEK_CYCLE(d+4),WEEK_CYCLE(d+3)];return Object.assign(base('detect','Encuentra el día que rompe la secuencia.','', 'Los días deben avanzar de uno en uno.'),{display:vals,options:vals,correct:2})}
+    case 6:{const baseDays=shuffle([0,2,4]);return Object.assign(base('relation','Relaciona cada día con el día siguiente.','', 'Avanza un día.'),{left:baseDays.map(x=>({text:WEEK_CYCLE(x),key:String(x)})),right:shuffle(baseDays.map(x=>({text:WEEK_CYCLE(x+1),key:String(x)})))})}
+    case 7:{const c=rand(0,6);return Object.assign(base('selection','Encuentra el día indicado.',`Toca ${WEEK_CYCLE(c)}.`,'Lee cada opción con atención.'),optsCorrect(WEEK_CYCLE(c),[WEEK_CYCLE(c-1),WEEK_CYCLE(c+1),WEEK_CYCLE(c+2)]))}
+    case 8:{const truth=choice([true,false]);const a=rand(0,6),st=truth?`Después de ${WEEK_CYCLE(a)} viene ${WEEK_CYCLE(a+1)}.`:`Antes de ${WEEK_CYCLE(a)} viene ${WEEK_CYCLE(a+1)}.`;return Object.assign(base('selection','Analiza la afirmación.',st,'Revisa el orden semanal.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:{const x=rand(0,6);return Object.assign(base('clues','Descubre el día secreto.','', 'El día buscado está entre AYER y MAÑANA.'),{clues:[`AYER fue ${WEEK_CYCLE(x-1)}.`,`MAÑANA será ${WEEK_CYCLE(x+1)}.`],...optsCorrect(WEEK_CYCLE(x),[WEEK_CYCLE(x-1),WEEK_CYCLE(x+1)])})}
+  }
+}
+function world4(i){
+  const m=rand(0,11);
+  switch(i){
+    case 0:{const ch=base('drag','Ubica el mes anterior y el siguiente.','', 'Los meses forman un ciclo: antes de enero viene diciembre del año anterior; después de diciembre, enero del siguiente.');ch.slots=[{label:`ANTES DE ${MONTHS[m].toUpperCase()}`},{label:`DESPUÉS DE ${MONTHS[m].toUpperCase()}`}];ch.items=shuffle([{text:MONTH_CYCLE(m-1),target:0},{text:MONTH_CYCLE(m+1),target:1},{text:MONTH_CYCLE(m+2),target:9}]);return ch}
+    case 1:{const dir=choice(['antes','después']),c=MONTH_CYCLE(m+(dir==='antes'?-1:1));return Object.assign(base('selection',`Selecciona el mes que va ${dir}.`,`Mes central: ${MONTHS[m]}`,'Sigue el ciclo de los meses, pasando al año anterior o siguiente cuando corresponda.'),optsCorrect(c,[MONTH_CYCLE(m),MONTH_CYCLE(m+(dir==='antes'?1:-1))]))}
+    case 2:{const s=rand(0,8),vals=[0,1,2,3].map(k=>MONTHS[s+k]);const ch=base('drag','Ordena los meses.','', 'Sigue el orden anual.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const s=rand(0,8),miss=rand(1,2),vals=[0,1,2,3].map(k=>MONTHS[s+k]);const ch=base('drag','Completa el mes que falta.','', 'Observa el mes anterior y el siguiente.');ch.slots=[{label:vals.map((v,j)=>j===miss?'___':v).join('  →  ')}];ch.items=shuffle([{text:vals[miss],target:0},{text:MONTHS[Math.min(11,s+5)],target:9},{text:MONTHS[Math.max(0,s-1)],target:9}]);return ch}
+    case 4:{const c=rand(0,11),before=MONTH_CYCLE(c-1),after=MONTH_CYCLE(c+1),distractor=MONTH_CYCLE(c+2);return Object.assign(base('selection','Selecciona las dos respuestas correctas.',`¿Qué mes va antes y qué mes va después de ${MONTH_CYCLE(c)}?`,'Recorre el ciclo de los meses; diciembre y enero pertenecen a años consecutivos.'),multiOptions([before,after],[distractor]))}
+    case 5:{const s=rand(0,8),vals=[MONTHS[s],MONTHS[s+1],MONTH_CYCLE(s+4),MONTHS[s+3]];return Object.assign(base('detect','Encuentra el mes que rompe la secuencia.','', 'Los meses deben avanzar de uno en uno.'),{display:vals,options:vals,correct:2})}
+    case 6:{const ms=shuffle([0,4,8]);return Object.assign(base('relation','Relaciona cada mes con su número.','', 'Enero es 1 y diciembre es 12.'),{left:ms.map(x=>({text:MONTHS[x],key:String(x)})),right:shuffle(ms.map(x=>({text:String(x+1),key:String(x)})))})}
+    case 7:{const x=rand(0,11);return Object.assign(base('selection','Encuentra el mes indicado.',`¿Cuál es el mes número ${x+1}?`,'Cuenta desde enero como mes 1.'),optsCorrect(MONTHS[x],[MONTH_CYCLE(x-1),MONTH_CYCLE(x+1),MONTH_CYCLE(x+2)]))}
+    case 8:{const x=rand(0,11),dim=daysInMonth(x+1),truth=choice([true,false]),claimed=truth?dim:(dim===31?30:31),st=`${MONTHS[x]} de 2026 tiene ${claimed} días.`;return Object.assign(base('selection','Analiza la afirmación.',st,'Revisa cuántos días tiene ese mes.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:{const x=rand(1,10);return Object.assign(base('clues','Descubre el mes secreto.','', 'El mes está entre los dos de las pistas.'),{clues:[`Estoy después de ${MONTHS[x-1]}.`,`Estoy antes de ${MONTHS[x+1]}.`],...optsCorrect(MONTHS[x],[MONTHS[x-1],MONTHS[x+1]])})}
+  }
+}
+function world5(i){
+  const sampled=randDate({avoidBoundary:true}),dt=dateObj(sampled.getMonth()+1,Math.min(sampled.getDate(),daysInMonth(sampled.getMonth()+1)-4));const prev=addDays(dt,-1),next=addDays(dt,1),monthName=MONTHS[dt.getMonth()];
+  switch(i){
+    case 0:{const ch=base('drag',`En ${monthName} de 2026, forma la fecha del día ${dt.getDate()}.`,'', 'El día de la semana y el número deben pertenecer a la misma fecha de ese mes.');ch.slots=[{label:'DÍA'},{label:'NÚMERO'}];ch.items=shuffle([{text:dayName(dt),target:0},{text:String(dt.getDate()),target:1},{text:dayName(next),target:9}]);return ch}
+    case 1:{const c=fmtShort(dt);return Object.assign(base('selection','Selecciona la pareja día + número correcta.',`Mes de referencia: ${monthName} de 2026.`,'Comprueba en tu calendario qué día de la semana corresponde a cada número.'),optsCorrect(c,[`${dayName(next)} ${dt.getDate()}`,`${dayName(dt)} ${next.getDate()}`,`${dayName(prev)} ${dt.getDate()}`]))}
+    case 2:{const vals=[prev,dt,next].map(fmtShort);const ch=base('drag',`Ordena tres fechas consecutivas de ${monthName} de 2026.`,'', 'Primero va la fecha anterior, luego la central y después la siguiente.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const askDay=true,correct=dayName(dt);const label=askDay?`___ ${dt.getDate()}`:`${dayName(dt)} ___`;const ch=base('drag',`En ${monthName} de 2026, completa la pareja día + número.`,'', 'Busca esa fecha en el mes indicado y completa el dato que falta.');ch.slots=[{label}];ch.items=shuffle([{text:correct,target:0},{text:askDay?dayName(next):String(next.getDate()),target:9},{text:askDay?dayName(prev):String(prev.getDate()),target:9}]);return ch}
+    case 4:return Object.assign(base('selection','Selecciona las dos fechas que rodean a HOY.',`HOY: ${fmtDate(dt)} de 2026.`,'Necesitas la fecha anterior y la siguiente dentro de la sucesión del calendario.'),multiOptions([fmtDate(prev),fmtDate(next)],[fmtDate(addDays(dt,2))]));
+    case 5:{const vals=[fmtShort(prev),`${dayName(next)} ${dt.getDate()}`,fmtShort(next)];return Object.assign(base('detect',`En ${monthName} de 2026, detecta la pareja día + número incorrecta.`,'', 'Una de las parejas no corresponde a una fecha real de ese mes.'),{display:vals,options:vals,correct:1})}
+    case 6:{const dates=[dt,addDays(dt,2),addDays(dt,4)];return Object.assign(base('relation',`En ${monthName} de 2026, relaciona cada número con su día de la semana.`,'', 'Comprueba cada número en el mes indicado.'),{left:dates.map(x=>({text:String(x.getDate()),key:isoDate(x)})),right:shuffle(dates.map(x=>({text:dayName(x),key:isoDate(x)})))})}
+    case 7:{const c=fmtShort(dt);return Object.assign(base('selection','Encuentra la pareja solicitada.',`En ${monthName} de 2026, toca la pareja ${c}.`,'Compara el día de la semana y el número dentro del mes indicado.'),optsCorrect(c,[fmtShort(prev),fmtShort(next),`${dayName(prev)} ${dt.getDate()}`]))}
+    case 8:{const truth=choice([true,false]),shown=truth?fmtShort(dt):`${dayName(next)} ${dt.getDate()}`;return Object.assign(base('selection',`Indica si la pareja corresponde a ${monthName} de 2026.`,`${shown} de ${monthName}.`,'Busca ese número en el mes indicado y verifica el día de la semana.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:return Object.assign(base('clues',`Descubre la pareja día + número de ${monthName} de 2026.`,'', 'La fecha está entre las dos fechas de las pistas.'),{clues:[`AYER fue ${fmtDate(prev)}.`,`MAÑANA será ${fmtDate(next)}.`],...optsCorrect(fmtDate(dt),[fmtDate(prev),fmtDate(next)])})
+  }
+}
+function world6(i){
+  const dt=randDate({avoidBoundary:true});const prev=addDays(dt,-1),next=addDays(dt,1);
+  switch(i){
+    case 0:{const ch=base('drag','Ubica las fechas en AYER, HOY y MAÑANA.','', 'Ordena las tres fechas consecutivas.');ch.slots=[{label:'AYER'},{label:'HOY'},{label:'MAÑANA'}];ch.items=shuffle([{text:fmtShort(prev),target:0},{text:fmtShort(dt),target:1},{text:fmtShort(next),target:2}]);return ch}
+    case 1:{const ask=choice(['AYER','MAÑANA']),c=ask==='AYER'?fmtShort(prev):fmtShort(next);return Object.assign(base('selection',`Selecciona ${ask}.`,`HOY: ${fmtShort(dt)}`,'Observa si debes retroceder o avanzar un día.'),optsCorrect(c,[fmtShort(dt),ask==='AYER'?fmtShort(next):fmtShort(prev)]))}
+    case 2:{const vals=[prev,dt,next].map(fmtShort),ch=base('drag','Ordena AYER, HOY y MAÑANA.','', 'Avanza de un día al siguiente.');ch.slots=[{label:'AYER'},{label:'HOY'},{label:'MAÑANA'}];ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const miss=choice(['AYER','HOY','MAÑANA']),map={AYER:prev,HOY:dt,MAÑANA:next},ch=base('drag',`Completa ${miss}.`,'', 'Observa las fechas que están antes y después.');ch.slots=[{label:`AYER: ${miss==='AYER'?'___':fmtShort(prev)} | HOY: ${miss==='HOY'?'___':fmtShort(dt)} | MAÑANA: ${miss==='MAÑANA'?'___':fmtShort(next)}`}];ch.items=shuffle([{text:fmtShort(map[miss]),target:0},{text:fmtShort(addDays(map[miss],2)),target:9},{text:fmtShort(addDays(map[miss],-2)),target:9}]);return ch}
+    case 4:return Object.assign(base('selection','Selecciona AYER y MAÑANA.',`HOY: ${fmtShort(dt)}`,'Selecciona una fecha anterior y una posterior.'),multiOptions([fmtShort(prev),fmtShort(next)],[fmtShort(dt)]));
+    case 5:{const vals=[`AYER: ${fmtShort(prev)}`,`HOY: ${fmtShort(dt)}`,`MAÑANA: ${fmtShort(addDays(dt,2))}`];return Object.assign(base('detect','Encuentra el error temporal.','', 'MAÑANA debe estar exactamente un día después de HOY.'),{display:vals,options:vals,correct:2})}
+    case 6:return Object.assign(base('relation',`Si HOY es ${fmtDate(dt)} de 2026, relaciona AYER, HOY y MAÑANA.`,'', 'Ubica cada fecha respecto de HOY.'),{left:[{text:fmtShort(prev),key:'a'},{text:fmtShort(dt),key:'h'},{text:fmtShort(next),key:'m'}],right:shuffle([{text:'AYER',key:'a'},{text:'HOY',key:'h'},{text:'MAÑANA',key:'m'}])});
+    case 7:{const m=dt.getMonth()+1;if(!correctCalendarMonths.includes(m))return world6(1);const target=choice([prev,next]);const rel=target<dt?'AYER':'MAÑANA';const instruction=rel==='AYER'?`Si HOY es ${fmtDate(dt)} de 2026, toca qué día fue AYER en el calendario.`:`Si HOY es ${fmtDate(dt)} de 2026, toca qué día sería MAÑANA en el calendario.`;return Object.assign(base('calendar',instruction,'','Busca el número y confirma el día de la semana.'),{month:m,targetDate:target.getDate()})}
+    case 8:{const truth=choice([true,false]),shown=truth?fmtShort(next):fmtShort(addDays(dt,2));return Object.assign(base('selection','Analiza la afirmación.',`Si HOY es ${fmtShort(dt)}, MAÑANA es ${shown}.`,'MAÑANA está un día después de HOY.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:return Object.assign(base('clues','Descubre qué fecha es HOY.','', 'HOY queda entre AYER y MAÑANA.'),{clues:[`AYER fue ${fmtShort(prev)}.`,`MAÑANA será ${fmtShort(next)}.`],...optsCorrect(fmtShort(dt),[fmtShort(prev),fmtShort(next)])})
+  }
+}
+function world7(i){
+  const dt=randDate();const m=dt.getMonth()+1;
+  switch(i){
+    case 0:{const s=rand(1,Math.max(1,daysInMonth(m)-4)),vals=[s,s+1,s+2,s+3];const miss=rand(1,2),ch=base('drag','Completa la fecha que falta en la secuencia del calendario.','', 'Los números avanzan de uno en uno dentro del mes.');ch.slots=[{label:`${vals.map((v,j)=>j===miss?'___':v).join('  →  ')} de ${MONTHS[m-1]}`}];ch.items=shuffle([{text:String(vals[miss]),target:0},{text:String(vals[miss]+2),target:9},{text:String(Math.max(1,vals[miss]-2)),target:9}]);return ch}
+    case 1:return Object.assign(base('selection','Identifica el día de la semana.',`¿Qué día cae el ${dt.getDate()} de ${MONTHS[m-1]} de 2026?`,'Busca la fecha en tu calendario.'),optsCorrect(dayName(dt),[dayName(addDays(dt,-1)),dayName(addDays(dt,1)),dayName(addDays(dt,2))]));
+    case 2:{const monday=addDays(dt,-dayIndexMon(dt)),vals=[0,1,2,3].map(k=>fmtShort(addDays(monday,k)));const ch=base('drag','Ordena estas fechas de la misma semana.','', 'Ordénalas de la más temprana a la más tardía.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const s=rand(2,Math.max(3,daysInMonth(m)-2)),ch=base('drag','Completa la casilla faltante.','', 'Observa el número anterior y el siguiente.');ch.slots=[{label:`${s-1}  →  ___  →  ${s+1}`}];ch.items=shuffle([{text:String(s),target:0},{text:String(s+2),target:9},{text:String(s-2),target:9}]);return ch}
+    case 4:{const prev=addDays(dt,-1),next=addDays(dt,1);return Object.assign(base('selection','Selecciona la fecha anterior y la posterior.',`Fecha central: ${fmtDate(dt)}`,'Busca un día antes y un día después.'),multiOptions([fmtDate(prev),fmtDate(next)],[fmtDate(addDays(dt,2))]))}
+    case 5:{const s=rand(2,Math.max(3,daysInMonth(m)-2)),vals=[String(s-1),String(s),String(s+4),String(s+2)];return Object.assign(base('detect','Encuentra la casilla alterada.','', 'Los números del calendario deben avanzar de uno en uno.'),{display:vals,options:vals,correct:2})}
+    case 6:{const anchor=dateObj(m,Math.min(Math.max(2,dt.getDate()),Math.max(2,daysInMonth(m)-2)));const dates=[addDays(anchor,-1),anchor,addDays(anchor,1)];return Object.assign(base('relation',`En ${MONTHS[m-1]} de 2026, relaciona cada número con su día de la semana.`,'', 'Busca cada número en el mes indicado y observa la columna del día.'),{left:dates.map(x=>({text:String(x.getDate()),key:isoDate(x)})),right:shuffle(dates.map(x=>({text:dayName(x),key:isoDate(x)})))})}
+    case 7:{const month=choice(correctCalendarMonths),day=rand(1,daysInMonth(month));return Object.assign(base('calendar','Encuentra la fecha en el calendario.',`Toca el ${day} de ${MONTHS[month-1]} de 2026.`,'Busca el número dentro del mes.'),{month,targetDate:day})}
+    case 8:{const dim=daysInMonth(m),truth=choice([true,false]),claim=truth?dim:(dim===31?30:31);return Object.assign(base('selection','Analiza la afirmación.',`${MONTHS[m-1]} de 2026 termina en ${claim}.`,'Observa el último día de ese mes.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:{return Object.assign(base('clues','Encuentra la fecha escondida.','', 'Combina el día de la semana, número y mes.'),{clues:[`Estoy en ${MONTHS[m-1]}.`,`Mi número es ${dt.getDate()}.`,`Soy ${dayName(dt)}.`],...optsCorrect(fmtDate(dt),[fmtDate(addDays(dt,-1)),fmtDate(addDays(dt,1))])})}
+  }
+}
+function world8(i){
+  const b=boundaryPair(),last=b.last,next=b.next,prev=addDays(last,-1),after=addDays(next,1);
+  switch(i){
+    case 0:{const ch=base('drag','Coloca la primera fecha del mes siguiente.','', 'Después del último día del mes comienza el día 1.');ch.slots=[{label:`DESPUÉS DE ${last.getDate()} DE ${MONTHS[last.getMonth()].toUpperCase()}`}];ch.items=shuffle([{text:`1 de ${MONTHS[next.getMonth()]}`,target:0},{text:`${last.getDate()+1} de ${MONTHS[last.getMonth()]}`,target:9},{text:`2 de ${MONTHS[next.getMonth()]}`,target:9}]);return ch}
+    case 1:return Object.assign(base('selection','Selecciona la fecha que viene después.',`HOY: ${fmtDate(last)}`,'Cambia al mes siguiente y vuelve al día 1.'),optsCorrect(fmtDate(next),[`${dayName(next)} ${last.getDate()+1} de ${MONTHS[last.getMonth()]}`,fmtDate(after)]));
+    case 2:{const vals=[fmtDate(prev),fmtDate(last),fmtDate(next)],ch=base('drag','Ordena las fechas cruzando el cambio de mes.','', 'El tiempo continúa aunque el número vuelva a 1.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const ch=base('drag','Completa la transición de mes.','', 'Después del último día aparece el 1 del mes siguiente.');ch.slots=[{label:`${last.getDate()} de ${MONTHS[last.getMonth()]}  →  ___`}];ch.items=shuffle([{text:`1 de ${MONTHS[next.getMonth()]}`,target:0},{text:`31 de ${MONTHS[last.getMonth()]}`,target:9},{text:`2 de ${MONTHS[next.getMonth()]}`,target:9}]);return ch}
+    case 4:return Object.assign(base('selection','Selecciona AYER y MAÑANA.',`HOY: ${fmtDate(next)}`,'AYER puede estar en el mes anterior.'),multiOptions([fmtDate(last),fmtDate(after)],[fmtDate(addDays(after,1))]));
+    case 5:{const invalidDay=daysInMonth(b.month)+1,invalid=`${invalidDay} de ${MONTHS[b.month-1]}`,valid1=`${daysInMonth(b.month)} de ${MONTHS[b.month-1]}`,valid2=`1 de ${MONTHS[b.month]}`;return Object.assign(base('detect','Detecta la fecha imposible.','', 'Revisa cuántos días tiene ese mes.'),{display:[valid1,invalid,valid2],options:[valid1,invalid,valid2],correct:1})}
+    case 6:{const pairs=[1,4,9].map(m=>({last:dateObj(m,daysInMonth(m)),next:dateObj(m+1,1)}));return Object.assign(base('relation','Relaciona el último día con el primer día del mes siguiente.','', 'Cada mes termina y el siguiente comienza en 1.'),{left:pairs.map((p,k)=>({text:`${p.last.getDate()} ${MONTHS[p.last.getMonth()]}`,key:String(k)})),right:shuffle(pairs.map((p,k)=>({text:`1 ${MONTHS[p.next.getMonth()]}`,key:String(k)})))})}
+    case 7:{const month=next.getMonth()+1;if(!correctCalendarMonths.includes(month))return world8(1);return Object.assign(base('calendar','Viaja al mes siguiente.',`Toca el primer día de ${MONTHS[next.getMonth()]}.`,'Busca el número 1 del nuevo mes.'),{month,targetDate:1})}
+    case 8:{const truth=choice([true,false]),shown=truth?fmtDate(next):`${dayName(next)} ${last.getDate()+1} de ${MONTHS[last.getMonth()]}`;return Object.assign(base('selection','Analiza la transición.',`Después de ${fmtDate(last)} viene ${shown}.`,'Al terminar el mes comienza el día 1 del siguiente.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:return Object.assign(base('clues','Descubre la fecha secreta.','', 'Las pistas describen el primer día de un nuevo mes.'),{clues:[`AYER fue ${fmtDate(last)}.`,`HOY comienza ${MONTHS[next.getMonth()]}.`],...optsCorrect(fmtDate(next),[fmtDate(last),fmtDate(after)])})
+  }
+}
+function world9(i){
+  const dt=randDate({avoidBoundary:false}),prev=addDays(dt,-1),next=addDays(dt,1);
+  switch(i){
+    case 0:{const vals=[fmtDate(prev),fmtDate(dt),fmtDate(next)],ch=base('drag','Ordena las evidencias temporales.','', 'Ubica primero la fecha anterior, luego HOY y después MAÑANA.');ch.slots=[{label:'EVIDENCIA 1'},{label:'EVIDENCIA 2'},{label:'EVIDENCIA 3'}];ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 1:return Object.assign(base('selection','Descubre la fecha secreta.',`Soy ${dayName(dt)}, mi número es ${dt.getDate()} y estoy en ${MONTHS[dt.getMonth()]}.`,'Combina las tres pistas.'),optsCorrect(fmtDate(dt),[fmtDate(prev),fmtDate(next),fmtDate(addDays(dt,7))]));
+    case 2:{const ds=[addDays(dt,-2),addDays(dt,-1),dt].map(fmtDate),ch=base('drag','Ordena las fechas usadas como pistas.','', 'Ordénalas cronológicamente.');ch.slots=ds.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(ds.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const ch=base('drag','Completa la fecha deducida.','', 'La fecha faltante queda entre AYER y MAÑANA.');ch.slots=[{label:`${fmtShort(prev)}  →  ___  →  ${fmtShort(next)}`}];ch.items=shuffle([{text:fmtShort(dt),target:0},{text:fmtShort(prev),target:9},{text:fmtShort(next),target:9}]);return ch}
+    case 4:return Object.assign(base('selection','Selecciona las dos pistas correctas.',`Fecha investigada: ${fmtDate(dt)}`,'Comprueba cada pista contra la fecha.'),multiOptions([`AYER fue ${fmtDate(prev)}.`,`MAÑANA será ${fmtDate(next)}.`],[`MAÑANA será ${fmtDate(addDays(dt,2))}.`]));
+    case 5:{const clues=[`Mi número es ${dt.getDate()}.`,`Soy ${dayName(dt)}.`,`Mi día anterior es ${dayName(addDays(dt,-2))}.`];return Object.assign(base('detect',`Para el ${fmtDate(dt)} de 2026, encuentra la pista falsa.`,'', 'El día anterior está exactamente un día antes.'),{display:clues,options:clues,correct:2})}
+    case 6:{const dates=[dt,addDays(dt,3),addDays(dt,6)];return Object.assign(base('relation','Relaciona cada pista con su fecha.','', 'Observa día, número y mes.'),{left:dates.map(x=>({text:`Soy ${dayName(x)} ${x.getDate()}`,key:isoDate(x)})),right:shuffle(dates.map(x=>({text:fmtDate(x),key:isoDate(x)})))})}
+    case 7:{const month=choice(correctCalendarMonths),day=rand(1,daysInMonth(month));return Object.assign(base('calendar','Encuentra la fecha investigada.',`Busca el ${day} de ${MONTHS[month-1]} de 2026.`,'Toca la casilla correcta.'),{month,targetDate:day})}
+    case 8:{const truth=choice([true,false]),st=truth?`Si HOY es ${fmtShort(dt)}, AYER fue ${fmtShort(prev)}.`:`Si HOY es ${fmtShort(dt)}, AYER fue ${fmtShort(next)}.`;return Object.assign(base('selection','Indica si la afirmación es verdadera o falsa.',st,'AYER está un día antes de HOY.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:return Object.assign(base('clues','Resuelve el caso final.','', 'Usa todas las pistas juntas.'),{clues:[`Estoy en ${MONTHS[dt.getMonth()]}.`,`AYER fue ${fmtShort(prev)}.`,`MAÑANA será ${fmtShort(next)}.`],...optsCorrect(fmtDate(dt),[fmtDate(prev),fmtDate(next)])})
+  }
+}
+function world10(i){
+  const h=choice(HOLIDAYS),dt=dateObj(h.m,h.d),prev=addDays(dt,-1),next=addDays(dt,1);
+  switch(i){
+    case 0:{const monthName=MONTHS[h.m-1],wrongDay=h.d===1?2:h.d-1;const ch=base('drag',`Ubica la fecha significativa en su mes de 2026.`,'', 'Relaciona el nombre de la conmemoración con su fecha correcta.');ch.slots=[{label:h.n}];ch.items=shuffle([{text:`${h.d} de ${monthName}`,target:0},{text:`${h.d} de ${MONTH_CYCLE(h.m)}`,target:9},{text:`${wrongDay} de ${monthName}`,target:9}]);return ch}
+    case 1:return Object.assign(base('selection','Identifica el día de la semana.',`¿Qué día cae ${h.n}, ${h.d} de ${MONTHS[h.m-1]} de 2026?`,'Busca la fecha en el calendario 2026.'),optsCorrect(dayName(dt),[dayName(prev),dayName(next),dayName(addDays(dt,2))]));
+    case 2:{const hs=shuffle(HOLIDAYS).slice(0,3).sort((a,b)=>a.m-b.m||a.d-b.d),vals=hs.map(x=>`${x.d} ${MONTHS[x.m-1]} — ${x.n}`),ch=base('drag','Ordena tres fechas significativas del año.','', 'Ordénalas desde la que ocurre primero hasta la última.');ch.slots=vals.map((_,j)=>({label:String(j+1)}));ch.items=shuffle(vals.map((v,j)=>({text:v,target:j})));return ch}
+    case 3:{const ch=base('drag','Completa la fecha significativa.','', 'Observa el nombre de la fecha y el calendario.');ch.slots=[{label:`${h.n}: ${h.d} de ___`}];ch.items=shuffle([{text:MONTHS[h.m-1],target:0},{text:MONTH_CYCLE(h.m),target:9},{text:MONTH_CYCLE(h.m-2),target:9}]);return ch}
+    case 4:return Object.assign(base('selection','Selecciona AYER y MAÑANA de esta fecha.',`HOY: ${h.n}, ${fmtDate(dt)}`,'Busca un día antes y un día después.'),multiOptions([fmtDate(prev),fmtDate(next)],[fmtDate(addDays(dt,2))]));
+    case 5:{const wrongDay=dayName(next),claims=[`${h.n}: ${h.d} de ${MONTHS[h.m-1]}.`,`Ese día es ${wrongDay}.`,`La fecha pertenece a 2026.`];return Object.assign(base('detect','Encuentra la información incorrecta.','', 'Comprueba el día de la semana de la fecha.'),{display:claims,options:claims,correct:1})}
+    case 6:{const hs=shuffle(HOLIDAYS).filter((x,j,all)=>all.findIndex(y=>y.m===x.m)===j).slice(0,3);return Object.assign(base('relation','Relaciona cada fecha significativa con su mes.','', 'Observa en qué mes ocurre cada una.'),{left:hs.map((x,k)=>({text:x.n,key:String(k)})),right:shuffle(hs.map((x,k)=>({text:MONTHS[x.m-1],key:String(k)})))})}
+    case 7:{const candidates=HOLIDAYS.filter(x=>correctCalendarMonths.includes(x.m)),x=choice(candidates);return Object.assign(base('calendar','Encuentra la fecha significativa en el calendario.',`Toca ${x.n}: ${x.d} de ${MONTHS[x.m-1]}.`,'Busca el número dentro del mes.'),{month:x.m,targetDate:x.d})}
+    case 8:{const truth=choice([true,false]),claim=truth?`${h.d} de ${MONTHS[h.m-1]}`:`${Math.min(daysInMonth(h.m),h.d+1)} de ${MONTHS[h.m-1]}`;return Object.assign(base('selection','Analiza la afirmación.',`${h.n} corresponde al ${claim} de 2026.`,'Compara el nombre con la fecha correcta.'),optsCorrect(truth?'VERDADERO':'FALSO',[truth?'FALSO':'VERDADERO']))}
+    default:return Object.assign(base('clues','Descubre la fecha chilena.','', 'Une el mes, número y día de la semana.'),{clues:[`Estoy en ${MONTHS[h.m-1]}.`,`Mi número es ${h.d}.`,`Soy ${dayName(dt)}.`],...optsCorrect(`${h.n}: ${fmtDate(dt)}`,[`${choice(HOLIDAYS).n}: ${fmtDate(prev)}`,`${choice(HOLIDAYS).n}: ${fmtDate(next)}`])})
+  }
+}
+const WORLD_GENERATORS=[world1,world2,world3,world4,world5,world6,world7,world8,world9,world10];
+
+/* Collection / final */
+function renderCollection(){const cs=$('#collectionSlots');cs.innerHTML='';ITEM_FILES.forEach((f,i)=>{const d=document.createElement('div');d.className='collection-slot-big'+(state.collected.includes(i+1)?' unlocked':'');d.innerHTML=`<img src="${A+f}" alt="${ITEM_NAMES[i]}">`;cs.appendChild(d)})}
+function openCollection(){renderCollection();showScreen('screen-collection')}
+function showFinal(){showScreen('screen-final');startConfetti()}
+let confettiTimer=null;
+function startConfetti(){const c=$('#confettiCanvas'),ctx=c.getContext('2d');const r=c.getBoundingClientRect();c.width=Math.max(1,Math.floor(r.width*devicePixelRatio));c.height=Math.max(1,Math.floor(r.height*devicePixelRatio));ctx.scale(devicePixelRatio,devicePixelRatio);const colors=['#ff4e67','#ffd43b','#4dbbff','#65c94b','#ad6bea','#ff8a2b'];let bits=Array.from({length:110},()=>({x:Math.random()*r.width,y:-Math.random()*r.height*.65,v:1.5+Math.random()*4,w:5+Math.random()*7,h:7+Math.random()*10,a:Math.random()*Math.PI,c:choice(colors)}));let start=performance.now();cancelAnimationFrame(confettiTimer);function frame(t){ctx.clearRect(0,0,r.width,r.height);bits.forEach(b=>{b.y+=b.v;b.x+=Math.sin((b.y+b.a*40)/38)*.8;b.a+=.04;ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.a);ctx.fillStyle=b.c;ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);ctx.restore();if(b.y>r.height+20){b.y=-30;b.x=Math.random()*r.width}});if(t-start<5200)confettiTimer=requestAnimationFrame(frame);else ctx.clearRect(0,0,r.width,r.height)}confettiTimer=requestAnimationFrame(frame)}
+
+/* Settings / reset */
+function openSettings(){updateSettingsUI();$('#settingsModal').classList.add('show')}
+function updateSettingsUI(){$('#audioToggle').textContent=state.settings.audio?'🔊 Activado':'🔇 Desactivado';$('#voiceSpeed').value=state.settings.speed;updateAudioButtons()}
+function askReset(){$('#resetModal').classList.add('show')}
+
+/* Events */
+$('#startBtn').onclick=()=>{renderWorlds();showScreen('screen-worlds')};
+$('#startAudio').onclick=()=>speak('Bienvenida. Misión: Domina el calendario. Reforcemos las habilidades matemáticas. Presiona comenzar para iniciar.');
+$('#startFullscreen').onclick=toggleFullscreen;$('#startSettings').onclick=openSettings;
+$('#worldHome').onclick=()=>showScreen('screen-start');$('#worldReset').onclick=askReset;$('#worldAudio').onclick=()=>{const parts=WORLD_NAMES.map((name,i)=>{const id=i+1;const completed=state.completedWorlds.includes(id);const unlocked=id<=state.unlockedWorld;const prog=state.worldProgress[id]||0;const status=completed?'completado':!unlocked?'bloqueado':prog?`${prog} de 10 desafíos completados`:'disponible';return `Mundo ${id}, ${name}, ${status}`});speak(`Mapa de mundos. Tienes ${state.completedWorlds.length} de 10 mundos completados. ${parts.join('. ')}.`)};$('#worldFullscreen').onclick=toggleFullscreen;$('#worldSettings').onclick=openSettings;$('#openCollectionBtn').onclick=openCollection;
+$('#challengeBack').onclick=()=>{renderWorlds();showScreen('screen-worlds')};$('#challengeAudio').onclick=()=>speak(challengeAudioText());$('#challengeSettings').onclick=openSettings;$('#challengeFullscreen').onclick=toggleFullscreen;$('#challengeHint').onclick=showHint;
+$('#collectionBack').onclick=()=>{renderWorlds();showScreen('screen-worlds')};$('#collectionAudio').onclick=()=>speak(`Mi colección. Has reunido ${state.collected.length} de 10 elementos.`);$('#collectionFullscreen').onclick=toggleFullscreen;
+$('#repeatCelebration').onclick=startConfetti;$('#backToWorlds').onclick=()=>{renderWorlds();showScreen('screen-worlds')};$('#resetFromFinal').onclick=askReset;$('#finalAudio').onclick=()=>speak('¡Lo lograste! Completaste los 10 mundos y reuniste todos los elementos. ¡Felicitaciones! Reuniste toda la colección del año.');
+$('#settingsClose').onclick=()=>$('#settingsModal').classList.remove('show');$('#settingsFullscreen').onclick=toggleFullscreen;$('#settingsReset').onclick=()=>{ $('#settingsModal').classList.remove('show');askReset()};$('#audioToggle').onclick=()=>{state.settings.audio=!state.settings.audio;saveState();updateSettingsUI()};$('#voiceSpeed').onchange=e=>{state.settings.speed=e.target.value;saveState()};
+$('#resetCancel').onclick=()=>$('#resetModal').classList.remove('show');$('#resetConfirm').onclick=()=>{$('#resetModal').classList.remove('show');resetState()};$('#resetAudio').onclick=()=>speak($('#resetText').textContent);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-speak]');if(b)speak(b.dataset.speak)});
+window.addEventListener('resize',()=>{if($('#screen-final').classList.contains('active'))startConfetti()});
+document.addEventListener('fullscreenchange',()=>{requestAnimationFrame(()=>{if($('#screen-final').classList.contains('active'))startConfetti()})});
+
+/* Capa de experiencia educativa. Sin conexiones ni dependencias externas. */
+const LESSONS=[
+ ['Antes y después','Reconoce el orden de AYER, HOY y MAÑANA.','AYER → HOY → MAÑANA','AYER ya pasó. HOY es el día de referencia. MAÑANA es el día siguiente.'],
+ ['Números del calendario','Encuentra números anteriores y siguientes del 1 al 31.','14 → 15 → 16','Para encontrar el anterior resta 1. Para encontrar el siguiente suma 1.'],
+ ['Días de la semana','Recorre la semana y descubre qué día viene antes o después.','sábado → domingo → lunes','La semana tiene siete días. Después del domingo comienza otra semana con el lunes.'],
+ ['Meses del año','Ordena los meses y reconoce cuánto dura cada uno.','enero → febrero → marzo','El año tiene doce meses. En 2026, febrero tiene 28 días. Después de diciembre llega enero del año siguiente.'],
+ ['Día y número','Relaciona el número de una fecha con su día de la semana.','1 de enero de 2026 → jueves','Busca primero el mes; luego el número. La columna te indica el día de la semana.'],
+ ['Ayer, hoy y mañana','Avanza o retrocede un día desde una fecha conocida.','Si HOY es 15 de enero, AYER fue 14 y MAÑANA será 16.','HOY es la fecha que propone el desafío; no necesariamente la fecha real en que estás jugando.'],
+ ['Lee el calendario','Ubica fechas y comprueba el orden de los días.','Febrero de 2026 termina el sábado 28.','Lee de izquierda a derecha. Al terminar una fila, continúa en la siguiente. Las casillas vacías no son días del mes.'],
+ ['Cambio de mes','Continúa una secuencia cuando termina un mes.','28 de febrero → 1 de marzo de 2026','Después del último día del mes viene el día 1 del siguiente. El día de la semana también avanza uno.'],
+ ['Calendario detective','Usa todas las pistas para comprobar una fecha.','Mes + número + día de la semana = una fecha para comprobar','Una pista puede parecer correcta por separado. Comprueba todas contra la fecha investigada.'],
+ ['Chile 2026','Ubica feriados nacionales y relaciona sus fechas.','18 de septiembre de 2026 → viernes','Consulta el calendario y su lista de feriados. No necesitas memorizar las conmemoraciones para aprender a ubicar fechas.']
+];
+let guideDialog,missionDialog,statsDialog,lastFocused=null;
+function make(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el}
+function button(text,fn,cls='ui-button'){const b=make('button',cls,text);b.type='button';b.onclick=fn;return b}
+function dialog(title){const d=make('dialog','pro-dialog'),head=make('div','dialog-head'),h=make('h2','',title);h.id='dialog-title-'+document.querySelectorAll('dialog').length;d.setAttribute('aria-labelledby',h.id);head.append(h,button('×',()=>d.close(),'dialog-close'));head.lastChild.setAttribute('aria-label','Cerrar');const body=make('div','dialog-body');d.append(head,body);d.addEventListener('close',()=>lastFocused?.focus?.());document.body.append(d);return {el:d,body}}
+function openDialog(d){lastFocused=document.activeElement;d.el.showModal()}
+function showGuide(){
+ if(!guideDialog)guideDialog=dialog('Cuaderno de exploración');
+ const b=guideDialog.body;b.replaceChildren();const tabs=make('div','guide-tabs'),content=make('div');
+ const topics=button('Conceptos',()=>{topics.classList.add('active');calendar.classList.remove('active');renderConcepts(content)}),calendar=button('Calendario 2026',()=>{calendar.classList.add('active');topics.classList.remove('active');renderGuideCalendar(content,session.challenge?.month||1)});
+ tabs.append(topics,calendar);b.append(tabs,content);topics.classList.add('active');renderConcepts(content);openDialog(guideDialog)
+}
+function renderConcepts(host){host.replaceChildren();const l=LESSONS[(session.world||1)-1];host.append(make('h3','',l[0]),make('p','',l[1]),make('div','mission-example',l[2]),make('p','',l[3]));const grid=make('div','guide-concepts');LESSONS.forEach((x,i)=>{const b=button('',()=>{host.replaceChildren(make('h3','',x[0]),make('p','',x[1]),make('div','mission-example',x[2]),make('p','',x[3]),button('Escuchar explicación',()=>speak(x.join('. '))),button('Todos los conceptos',()=>renderConcepts(host)))},'concept-card');b.append(make('strong','',`${i+1}. ${x[0]}`),make('small','','Ver explicación y ejemplo'));grid.append(b)});host.append(grid)}
+function renderGuideCalendar(host,month){
+ host.replaceChildren();const header=make('div','guide-calendar-head'),select=make('select');select.setAttribute('aria-label','Mes de consulta');MONTHS.forEach((m,i)=>{const o=make('option','',m+' 2026');o.value=i+1;o.selected=i+1===month;select.append(o)});select.onchange=()=>renderGuideCalendar(host,Number(select.value));
+ const prev=button('‹',()=>renderGuideCalendar(host,month-1)),next=button('›',()=>renderGuideCalendar(host,month+1));prev.disabled=month===1;next.disabled=month===12;prev.setAttribute('aria-label','Mes anterior');next.setAttribute('aria-label','Mes siguiente');header.append(prev,select,next);host.append(header);
+ const grid=make('div','guide-grid');DAYS_L.forEach(d=>grid.append(make('span','weekday',d.slice(0,3))));const first=dayIndexMon(dateObj(month,1));for(let i=0;i<42;i++){const day=i-first+1,valid=day>0&&day<=daysInMonth(month),h=HOLIDAYS.find(x=>x.m===month&&x.d===day),cell=make('span',h?'holiday':'',valid?String(day):'');if(valid)cell.setAttribute('aria-label',fmtDate(dateObj(month,day))+(h?': '+h.n:''));grid.append(cell)}host.append(grid);
+ const list=make('div','guide-holidays');list.append(make('strong','','Feriados nacionales del mes'));const hs=HOLIDAYS.filter(x=>x.m===month);if(!hs.length)list.append(make('p','','Este mes no tiene feriados nacionales en la lista.'));hs.forEach(h=>list.append(make('p','',`${h.d}: ${h.n} · ${dayName(dateObj(month,h.d))}`)));host.append(list,make('p','','Las celdas doradas indican feriados nacionales. No se incluyen feriados regionales.'))
+}
+
+function setupNotebook(){
+ const challengeButton=button('Cuaderno',showGuide,'ui-button notebook-challenge');
+ challengeButton.setAttribute('aria-label','Abrir cuaderno de conceptos y calendario 2026');
+ $('#challengeStage').append(challengeButton);
+ const mapButton=button('Cuaderno',showGuide,'ui-button notebook-map');
+ mapButton.setAttribute('aria-label','Abrir cuaderno de conceptos y calendario 2026');
+ $('#worldsStage').append(mapButton);
+}
+setupNotebook();
+
+/* Init */
+renderWorlds();renderCollection();updateSettingsUI();
+})();
+
+</script>
+</body>
+</html>
